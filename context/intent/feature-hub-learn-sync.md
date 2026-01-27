@@ -1,0 +1,145 @@
+# Feature Intent: Hub Learn Sync (Explicit Learning & Context Evolution)
+
+## What
+
+Provide a structured and explicit mechanism to **capture, validate, and synchronize learnings** produced during the Build phase into the Context Mesh.
+
+The Learn Sync feature ensures that insights, mistakes, refinements, and outcomes are not lost after execution, but are consciously transformed into **evolution artifacts, updated decisions, or reusable knowledge**.
+
+Learning is never automatic. It is **triggered, reviewed, and accepted** by humans.
+
+---
+
+## Why
+
+**Business Value**
+- Prevents teams from repeating the same mistakes
+- Preserves institutional knowledge beyond individuals
+- Improves predictability and quality over time
+- Makes AI-assisted development progressively safer and more aligned
+
+**Technical Value**
+- Creates a formal feedback loop in AI-assisted workflows
+- Separates execution from learning to avoid bias
+- Enables gradual refinement of decisions and patterns
+- Keeps context accurate as systems evolve
+
+---
+
+## Scope
+
+### Learning Capture
+- Capture learnings derived from:
+  - Completed build executions
+  - Failed or reverted changes
+  - Unexpected side effects
+  - Clarified requirements or constraints
+- Learning capture must be **explicitly initiated**
+
+### Learning Classification
+- Learnings may result in:
+  - Evolution entries (what changed and why)
+  - Decision updates or supersessions
+  - New or refined patterns
+  - New or refined anti-patterns
+- Each learning must have a clear target artifact
+
+### Validation & Acceptance
+- All learnings start as *Proposed*
+- Human review is required to:
+  - Accept
+  - Modify
+  - Reject
+- Accepted learnings become part of the authoritative context
+
+### Synchronization
+- Ensure that accepted learnings are:
+  - Linked to their originating feature or decision
+  - Discoverable by agents during future cycles
+  - Included in context bundles consumed by MCP
+
+---
+
+## Acceptance Criteria
+
+### Functional
+- [ ] Learn Sync can be explicitly triggered by the user
+- [ ] Learnings are captured as proposed artifacts
+- [ ] Each learning references:
+  - originating feature
+  - related decisions
+  - execution outcome
+- [ ] Learnings can be reviewed and accepted incrementally
+- [ ] Accepted learnings update the appropriate context artifacts
+- [ ] Agents consume validated learnings in subsequent cycles
+
+### Non-Functional
+- [ ] No automatic learning or mutation occurs
+- [ ] Clear separation between execution output and learning input
+- [ ] Learnings are traceable and auditable
+- [ ] Learning artifacts are deterministic and repeatable
+- [ ] Learn process scales with project size and duration
+
+---
+
+## Implementation Approach
+
+1. **Explicit Trigger**
+   - User initiates Learn Sync after a build cycle
+   - Trigger may occur via:
+     - chat
+     - CLI
+     - UI action
+   - No background or implicit learning
+
+2. **Learning Draft Generation**
+   - MCP generates proposed learning drafts based on:
+     - build plan
+     - execution outcome
+     - user-provided feedback
+   - Drafts clearly indicate uncertainty and assumptions
+
+3. **Classification & Targeting**
+   - Each learning draft must specify its intended destination:
+     - evolution log
+     - decision update
+     - pattern
+     - anti-pattern
+
+4. **Human Review Loop**
+   - User reviews learning drafts
+   - Accepts, edits, or rejects each independently
+   - Partial acceptance is allowed
+
+5. **Context Synchronization**
+   - Accepted learnings are merged into context artifacts
+   - Context graph is updated accordingly
+   - Learnings become available for future reasoning
+
+---
+
+## Constraints
+
+- **No background learning**: all learning is explicit
+- **Human authority required**: no self-modifying system behavior
+- **Separation of concerns**: build and learn remain distinct phases
+- **Evidence-based**: learnings must reference concrete outcomes
+- **Agent-agnostic**: learning logic must not depend on a specific agent
+
+---
+
+## Related
+
+- [Project Intent](./project-intent.md)
+- [Feature: Hub Core](./feature-hub-core.md)
+- [Feature: Hub Build Protocol](./feature-hub-build-protocol.md)
+- [Feature: Hub UI](./feature-hub-ui.md)
+- [Decision: Learning Artifact Taxonomy](../decisions/009-learning-artifact-taxonomy.md)
+- [Evolution Log](../evolution/changelog.md)
+
+---
+
+## Status
+
+- **Created**: 2026-01-26 (Phase: Intent)
+- **Status**: Active
