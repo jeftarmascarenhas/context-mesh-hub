@@ -143,8 +143,8 @@ This protocol exists to preserve **human authority, traceability, and control** 
 - [Project Intent](./project-intent.md)
 - [Feature: Hub Core](./feature-hub-core.md)
 - [Feature: Hub Brownfield](./feature-hub-brownfield.md)
-- [Decision: Build Execution Modes](../decisions/006-build-execution-modes.md)
-- [Decision: MCP Tool Contracts](../decisions/003-mcp-tool-contracts.md)
+- [Decision: Build Execution Modes](../decisions/004-build-execution-modes.md)
+- [Decision: MCP Tool Contracts](../decisions/002-mcp-tool-contracts.md)
 
 ---
 

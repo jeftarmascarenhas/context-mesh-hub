@@ -134,7 +134,7 @@ Learning is never automatic. It is **triggered, reviewed, and accepted** by huma
 - [Feature: Hub Core](./feature-hub-core.md)
 - [Feature: Hub Build Protocol](./feature-hub-build-protocol.md)
 - [Feature: Hub UI](./feature-hub-ui.md)
-- [Decision: Learning Artifact Taxonomy](../decisions/009-learning-artifact-taxonomy.md)
+- [Decision: Learning Artifact Taxonomy](../decisions/008-learning-artifact-taxonomy.md)
 - [Evolution Log](../evolution/changelog.md)
 
 ---

@@ -136,7 +136,7 @@ The CLI does **not** implement context logic itself. It delegates domain behavio
 - [Feature: Hub Build Protocol](./feature-hub-build-protocol.md)
 - [Feature: Hub UI](./feature-hub-ui.md)
 - [Decision: Tech Stack](../decisions/001-tech-stack.md)
-- [Decision: Security Guardrails](../decisions/007-security-guardrails.md)
+- [Decision: Agent Scope and Authority](../decisions/007-agent-scope-and-authority.md)
 
 ## Status
 

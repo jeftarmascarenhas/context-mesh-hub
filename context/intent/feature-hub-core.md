@@ -114,9 +114,8 @@ Hub Core is the foundational runtime that turns Context Mesh into an **active, e
 
 - [Project Intent](./project-intent.md)
 - [Decision: Tech Stack](../decisions/001-tech-stack.md)
-- [Decision: Repo-first Storage](../decisions/002-repo-first-storage.md)
-- [Decision: MCP Tool Contracts](../decisions/003-mcp-tool-contracts.md)
-- [Decision: Context Bundling Strategy](../decisions/004-context-bundling-strategy.md)
+- [Decision: MCP Tool Contracts](../decisions/002-mcp-tool-contracts.md)
+- [Decision: Context Bundling Strategy](../decisions/003-context-bundling-strategy.md)
 
 ## Status
 

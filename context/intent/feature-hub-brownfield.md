@@ -128,8 +128,8 @@ This feature allows teams to adopt Context Mesh without rewriting history, freez
 - [Project Intent](./project-intent.md)
 - [Feature: Hub Core](./feature-hub-core.md)
 - [Feature: Hub Build Protocol](./feature-hub-build-protocol.md)
-- [Decision: Brownfield Extraction Pipeline](../decisions/005-brownfield-extraction-pipeline.md)
-- [Decision: Context Bundling Strategy](../decisions/004-context-bundling-strategy.md)
+- [Decision: Brownfield Context Extraction](../decisions/005-brownfield-context-extraction.md)
+- [Decision: Context Bundling Strategy](../decisions/003-context-bundling-strategy.md)
 
 ---
 

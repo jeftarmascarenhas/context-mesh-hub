@@ -122,7 +122,7 @@ The Hub UI acts as a **situational awareness layer** for developers and teams, m
 - [Feature: Hub CLI](./feature-hub-cli.md)
 - [Feature: Hub Build Protocol](./feature-hub-build-protocol.md)
 - [Feature: Hub Learn Sync](./feature-hub-learn-sync.md)
-- [Decision: UI Local Architecture](../decisions/008-ui-local-architecture.md)
+- [Decision: UI Read-Only by Default](../decisions/006-ui-readonly-by-default.md)
 
 ## Status
 
