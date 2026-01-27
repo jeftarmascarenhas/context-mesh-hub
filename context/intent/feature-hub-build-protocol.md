@@ -67,19 +67,19 @@ This protocol exists to preserve **human authority, traceability, and control** 
 ## Acceptance Criteria
 
 ### Functional
-- [ ] Build actions cannot proceed without an explicit plan
-- [ ] Execution is blocked until approval is recorded
-- [ ] Build plans reference the correct feature intent and decisions
-- [ ] Execution instructions are generated deterministically
-- [ ] Execution respects scope and constraints defined in the plan
-- [ ] Approval status is visible to the user and agent
+- [x] Build actions cannot proceed without an explicit plan
+- [x] Execution is blocked until approval is recorded
+- [x] Build plans reference the correct feature intent and decisions
+- [x] Execution instructions are generated deterministically
+- [x] Execution respects scope and constraints defined in the plan
+- [x] Approval status is visible to the user and agent
 
 ### Non-Functional
-- [ ] Protocol is agent-agnostic (works with any MCP-compatible agent)
-- [ ] No implicit execution is allowed by default
-- [ ] Clear feedback is provided at each step (plan, approve, execute)
-- [ ] Execution behavior is predictable and auditable
-- [ ] Protocol does not require IDE-specific capabilities
+- [x] Protocol is agent-agnostic (works with any MCP-compatible agent)
+- [x] No implicit execution is allowed by default
+- [x] Clear feedback is provided at each step (plan, approve, execute)
+- [x] Execution behavior is predictable and auditable
+- [x] Protocol does not require IDE-specific capabilities
 
 ---
 
@@ -145,10 +145,54 @@ This protocol exists to preserve **human authority, traceability, and control** 
 - [Feature: Hub Brownfield](./feature-hub-brownfield.md)
 - [Decision: Build Execution Modes](../decisions/004-build-execution-modes.md)
 - [Decision: MCP Tool Contracts](../decisions/002-mcp-tool-contracts.md)
+- [Decision: Prompt Pack Resolution and Update Model](../decisions/010-prompt-pack-resolution-and-update-model.md)
 
 ---
 
 ## Status
 
 - **Created**: 2026-01-26 (Phase: Intent)
-- **Status**: Active
+- **Completed**: 2026-01-27 (Phase: Build)
+- **Status**: Completed
+
+## Implementation Notes
+
+Hub Build Protocol has been implemented as an extension to Hub Core MCP server.
+
+### Components Implemented
+
+1. **Build Protocol Core** (`build_protocol.py`)
+   - `BuildPlan` - Structured plan representation
+   - `ApprovalState` - Approval status management
+   - `ExecutionInstruction` - Structured execution instructions
+   - `BuildProtocol` - Main protocol logic
+   - Plan generation from feature intents
+   - Approval state management (full/partial/reject)
+   - Instruction generation from approved plans
+
+2. **MCP Tools** (extended `tools.py`)
+   - `build_plan` - Generate execution plans from feature intents
+   - `build_approve` - Approve or reject build plans
+   - `build_execute` - Generate execution instructions from approved plans
+
+### Features
+
+- **Plan Generation**: Extracts implementation steps, constraints, and acceptance criteria from feature intents
+- **Approval Workflow**: Supports full approval, partial approval (by step), and rejection with feedback
+- **Execution Gating**: Execution instructions only generated for approved plans
+- **Instruction Format**: Agent-agnostic structured format (no IDE-specific commands)
+- **State Management**: In-memory state storage (plans and approvals)
+
+### Verification
+
+- ✅ Plan generation works for features
+- ✅ Approval workflow (approve/reject) works correctly
+- ✅ Execution blocked without approval
+- ✅ Instructions generated deterministically
+- ✅ All Acceptance Criteria met
+
+### Limitations
+
+- State is in-memory only (lost on server restart)
+- Plan versioning not implemented
+- No persistence layer (can be added later if needed)
