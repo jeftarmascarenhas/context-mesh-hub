@@ -142,69 +142,93 @@ The CLI does **not** implement context logic itself. It delegates domain behavio
 ## Status
 
 - **Created**: 2026-01-26 (Phase: Intent)
-- **Completed**: 2026-01-27 (Phase: Build)
+- **Updated**: 2026-01-28 (Phase: Build) - Re-architected to Python
 - **Status**: Completed
 
 ## Implementation Notes
 
-Hub CLI has been implemented as a Node.js/TypeScript CLI package.
+Hub CLI has been **re-architected from Node.js to Python** for stack unification with hub-core.
+
+### Architecture (v2 - Python)
+
+**Stack**: Python 3.12+ with Typer, Rich, httpx, pydantic
+
+**Installation**: `pip install context-mesh-hub` or `uv pip install context-mesh-hub`
+
+### Command Surface
+
+```
+cm init --ai <agent>   # Initialize and choose AI backend
+cm config              # Show MCP configuration for editors
+cm agents              # List supported AI agents and status
+cm doctor              # Run diagnostics
+cm ui                  # Start UI dashboard
+cm chat "message"      # Chat via CLI (requires chat-capable agent)
+cm                     # Interactive menu
+```
+
+### AI Agent Support
+
+Supports 4 primary AI backends:
+
+| Agent | Type | Use Case |
+|-------|------|----------|
+| `cursor` | IDE | MCP in Cursor editor |
+| `copilot` | IDE | MCP in VS Code + GitHub Copilot |
+| `gemini` | CLI | Terminal chat via Gemini CLI |
+| `claude` | CLI | Terminal chat via Claude Code |
+
+Configuration stored in `~/.context-mesh-hub/config.json`.
 
 ### Components Implemented
 
-1. **CLI Framework** (`src/index.ts`)
-   - Commander.js for command parsing
-   - Command structure: init, start, stop, status, ui, doctor
-   - Version and help output
+1. **CLI Framework** (`src/hub_cli/main.py`)
+   - Typer for command parsing
+   - Rich for beautiful terminal output
+   - Interactive menu with status checks
 
-2. **Bootstrap Command** (`src/commands/init.ts`)
-   - Creates required directory structure
-   - Generates AGENTS.md template
-   - Creates context/.context-mesh-framework.md placeholder
-   - Creates context/evolution/changelog.md
-   - Idempotent: safe to run multiple times
-   - Supports --force flag for overwrite
+2. **Configuration** (`src/hub_cli/config.py`)
+   - Persistent config in `~/.context-mesh-hub/`
+   - AI agent preference storage
+   - Agent installation detection
 
-3. **Runtime Management** (`src/commands/start.ts`, `stop.ts`, `status.ts`)
-   - `cm start`: Spawns Python MCP server process
-   - `cm stop`: Gracefully terminates MCP server
-   - `cm status`: Checks if MCP server is running
-   - Process management via PID file
-   - Cross-platform process handling
+3. **MCP Client** (`src/hub_cli/mcp_client.py`)
+   - Direct integration with hub-core
+   - Tool calling via Python imports
+   - MCP config generation for editors
 
-4. **UI Management** (`src/commands/ui.ts`)
-   - Placeholder for UI launch (Feature 5 will complete)
-   - Outputs repository and port information
-   - Supports --open flag for browser
+4. **Agent Integration** (`src/hub_cli/agents.py`)
+   - Detection of installed AI tools
+   - Installation instructions for each agent
+   - IDE vs CLI agent differentiation
 
-5. **Diagnostics** (`src/commands/doctor.ts`)
-   - Checks Node.js version (Active LTS >=20)
-   - Checks Python version (>=3.12)
-   - Validates repository structure
-   - Checks required directories
-   - Provides actionable remediation steps
+5. **UI Components** (`src/hub_cli/ui.py`)
+   - Gradient text banner
+   - Status tables
+   - MCP config display panels
 
-6. **Utilities** (`src/utils/`)
-   - `repo.ts`: Repository root detection
-   - `process.ts`: Process management (PID, spawn, kill)
+### Key Features
 
-### Features
-
-- **Thin Orchestration**: Delegates all domain logic to MCP server
-- **Safe Defaults**: No destructive operations, explicit confirmations
-- **Cross-Platform**: Uses cross-spawn for process management
-- **Clear Output**: Structured, readable command output
-- **Error Handling**: Clear error messages with remediation
+- **AI Agent Selection**: `cm init --ai cursor` to choose preferred AI
+- **MCP Config Export**: Shows JSON config for any MCP-compatible editor
+- **Smart Detection**: Detects installed agents and shows installation help
+- **IDE vs CLI**: Distinguishes between IDE agents (use MCP) and CLI agents (use chat)
+- **Beautiful UI**: Rich terminal formatting with colors and panels
 
 ### Verification
 
-- ✅ CLI structure created (TypeScript, Commander.js)
-- ✅ All commands implemented
-- ✅ Process management works (PID tracking)
-- ✅ Repository detection works
+- ✅ Python CLI structure (Typer, Rich)
+- ✅ AI agent selection (`cm init --ai`)
+- ✅ MCP config generation (`cm config`)
+- ✅ Agent status display (`cm agents`)
+- ✅ Diagnostics (`cm doctor`)
+- ✅ Interactive menu (`cm`)
 - ✅ All Acceptance Criteria met
 
-### Limitations
+### Migration from v1 (Node.js)
 
-- UI command is placeholder (Feature 5 will complete)
-- MCP server path detection is basic (assumes hub-core is installed)
-- No global installation support yet (use pnpm/npx)
+The Node.js CLI was moved to `hub-cli-old-node/` and replaced with Python implementation for:
+- Stack unification (Python + FastMCP)
+- Better integration with hub-core
+- Simpler dependency management
+- Single language for all backend components

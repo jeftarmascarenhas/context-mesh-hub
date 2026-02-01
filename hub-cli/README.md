@@ -1,84 +1,168 @@
-# Hub CLI - Context Mesh Hub Command Line Interface
+# Context Mesh Hub CLI
 
-The CLI provides bootstrap, runtime management, and diagnostics for Context Mesh Hub.
+**Framework that standardizes Context Engineering processes**
+
+The CLI provides setup, configuration, and natural language interaction with Context Mesh Hub.
 
 ## Installation
 
+### With uv (recommended)
+
+```bash
+uv tool install context-mesh-hub
+```
+
+### With pip
+
+```bash
+pip install context-mesh-hub
+```
+
+### From source (development)
+
 ```bash
 cd hub-cli
-pnpm install
-pnpm build
+uv sync
+uv run cm
 ```
 
 ## Usage
 
-### Initialize Context Mesh Hub
+### Interactive Setup
+
+Run without arguments to start the interactive setup:
 
 ```bash
-cm init
+cm
 ```
 
-Initializes Context Mesh Hub in the current repository. Creates required directory structure and template files.
+This will:
+1. Check your environment (Python, dependencies)
+2. Show the MCP configuration to copy to your AI editor
+3. Provide options to start UI, run diagnostics, or chat
 
-### Start MCP Server
+### Commands
+
+| Command | Description |
+|---------|-------------|
+| `cm` | Interactive setup and menu |
+| `cm config` | Show MCP configuration for AI editors |
+| `cm doctor` | Run diagnostics and check environment |
+| `cm ui` | Start the UI dashboard |
+| `cm chat` | Chat with natural language |
+| `cm chat "message"` | Execute a natural language command |
+
+### Natural Language Chat
+
+The CLI supports natural language commands when an LLM API key is configured:
 
 ```bash
-cm start
+# Interactive chat
+cm chat
+
+# Single command
+cm chat "add a feature for user authentication"
+cm chat "what features do we have?"
+cm chat "show project status"
 ```
 
-Starts the local MCP server for the current repository.
+### LLM Configuration
 
-### Check Status
+Set environment variables to enable natural language:
 
 ```bash
-cm status
+# OpenAI (default)
+export OPENAI_API_KEY=sk-...
+
+# Anthropic
+export ANTHROPIC_API_KEY=sk-ant-...
+export CM_LLM_PROVIDER=anthropic
+
+# Ollama (local, no API key needed)
+export CM_LLM_PROVIDER=ollama
+export CM_LLM_MODEL=llama3.2
+
+# OpenRouter
+export OPENROUTER_API_KEY=sk-or-...
+export CM_LLM_PROVIDER=openrouter
 ```
 
-Reports whether the MCP server is running.
+## MCP Configuration
 
-### Stop MCP Server
+After running `cm` or `cm config`, copy the JSON configuration to your AI editor:
 
-```bash
-cm stop
+### Cursor
+
+Settings → Features → MCP Servers → Add
+
+### VS Code + GitHub Copilot
+
+Settings → GitHub Copilot → MCP Servers
+
+### Claude Desktop
+
+Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "context-mesh-hub": {
+      "command": "python",
+      "args": ["-m", "hub_core.server"]
+    }
+  }
+}
 ```
-
-Stops the local MCP server.
-
-### Launch UI
-
-```bash
-cm ui
-```
-
-Launches the local Next.js UI (when Feature 5 is complete).
-
-### Diagnostics
-
-```bash
-cm doctor
-```
-
-Runs diagnostics to check environment, versions, and repository structure.
-
-## Commands
-
-- `cm init` - Initialize Context Mesh Hub
-- `cm start` - Start MCP server
-- `cm stop` - Stop MCP server
-- `cm status` - Check MCP server status
-- `cm ui` - Launch local UI
-- `cm doctor` - Run diagnostics
-
-## Requirements
-
-- Node.js 20+ (Active LTS)
-- Python 3.12+
-- pnpm (package manager)
 
 ## Architecture
 
-The CLI is a thin orchestration layer that:
-- Delegates domain logic to the MCP server
-- Manages process lifecycle
-- Provides developer-friendly commands
-- Does not implement context logic itself
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         USER                                    │
+│                                                                 │
+│   ┌─────────────┐              ┌─────────────────────────────┐ │
+│   │   CLI (cm)  │              │  Chat (Cursor/Copilot/etc)  │ │
+│   │  Python+uv  │              │                             │ │
+│   └──────┬──────┘              └──────────────┬──────────────┘ │
+│          │                                    │                 │
+│          ▼                                    ▼                 │
+│   ┌──────────────────────────────────────────────────────────┐ │
+│   │                    MCP SERVER (hub-core)                 │ │
+│   │                     Python + FastMCP                     │ │
+│   └──────────────────────────────────────────────────────────┘ │
+│                              │                                  │
+│                              ▼                                  │
+│                    ┌─────────────────┐                         │
+│                    │  context/ files │                         │
+│                    │  (repo-first)   │                         │
+│                    └─────────────────┘                         │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## Development
+
+```bash
+cd hub-cli
+
+# Install dependencies
+uv sync
+
+# Run in development
+uv run cm
+
+# Run tests
+uv run pytest
+
+# Build
+uv build
+```
+
+## Requirements
+
+- Python 3.12+
+- uv (recommended) or pip
+- Node.js 20+ (for UI only)
+
+## License
+
+MIT

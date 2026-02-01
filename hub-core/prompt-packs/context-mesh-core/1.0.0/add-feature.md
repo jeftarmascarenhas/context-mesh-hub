@@ -1,35 +1,133 @@
-# Add Feature
+# Prompt: Add Feature
 
-Create a new feature intent following Context Mesh framework.
+Use this prompt to add a new feature to a project that already has Context Mesh.
 
-## Context
-- Project intent exists
-- Feature is being planned/requested
-- Need to create feature intent artifact
+**What is a feature?** A distinct piece of functionality (e.g., "user authentication", "payment processing", "dark mode"). Each feature gets:
+- **Intent file** (`feature-*.md`) - Documents WHAT and WHY
+- **Decision file** (`decisions/*.md`) - Documents HOW (technical approach, also called ADR)
 
-## Required Inputs
-- Feature name
-- What: Description of what the feature does
-- Why: Business/user value, problem it solves
-- Acceptance Criteria: Functional requirements
+## How to Use
 
-## Steps
+1. **Copy** the prompt below
+2. **Paste** in your AI assistant (Cursor, Copilot, Claude, etc.)
+3. **Answer** the questions
+4. **Review** generated files
+5. **Build** - Use the execution prompt to implement
 
-1. Load project intent
-2. Load relevant decisions
-3. Create `context/intent/feature-{name}.md` with:
-   - What section
-   - Why section
-   - Acceptance Criteria
-   - Related links (project intent, decisions)
-   - Status section (Created: date, Status: Draft)
-4. Ensure bidirectional links are created
+---
 
-## Output
-Generate feature intent file in `context/intent/` following Context Mesh structure.
+## Prompt
 
-## Constraints
-- Must reference project intent
-- Must link to relevant decisions
-- Must include Acceptance Criteria
-- Must not include implementation details (→ decisions/)
+```
+Add a new feature to this Context Mesh project.
+
+**FIRST: Load framework context:**
+- Load @context/.context-mesh-framework.md (if exists) to understand Context Mesh framework rules and file type separation
+- Understand Plan, Approve, Execute pattern
+- Understand when to create vs not create files
+
+Then, analyze the existing @context/ to check if this feature already exists:
+- Check if feature-[name].md already exists in context/intent/
+- If feature exists, inform me: "This feature already exists. Use update-feature.md to modify it, or choose a different name."
+- If feature does NOT exist, proceed with the questions below.
+
+Then ask me:
+
+**Feature Information:**
+1. Feature name
+2. What it does and why we need it
+3. Acceptance criteria
+
+**Technical Decision (ADR):**
+4. Technical approach - What technical solution will be used?
+5. Why this approach? (Rationale) - What are the reasons for choosing this approach?
+6. What alternatives did you consider? - What other options were evaluated and why weren't they chosen?
+7. Technical context - Any constraints, existing patterns, or dependencies that influence this decision?
+
+Then create:
+- context/intent/feature-[name].md
+  - Include "Related" section with bidirectional links:
+    - [Project Intent](project-intent.md)
+    - [Decision: [Feature Name]](../decisions/[next-number]-[name].md)
+- context/decisions/[next-number]-[name].md (ADR required BEFORE implementing)
+  - Include: Context, Decision, Rationale, Alternatives Considered, Related links, Status
+  - Include "Related" section with bidirectional links:
+    - [Project Intent](../intent/project-intent.md)
+    - [Feature: [Feature Name]](../intent/feature-[name].md)
+    - [Decision: Tech Stack](001-tech-stack.md) (if applicable and exists)
+- Update context/intent/project-intent.md
+  - Add new feature to "Related" section: [Feature: [Feature Name]](feature-[name].md)
+- Update changelog.md
+- Update AGENTS.md (Feature-Specific Context section)
+
+Follow the pattern of existing files in @context/.
+Remember: ADR must exist before implementation starts. The decision file should be complete with all sections.
+
+**Important**: Create bidirectional links between feature and decision files:
+- Feature files must link to their decision files using format: `- [Decision: Name](../decisions/[number]-[name].md)`
+- Decision files must link back to their feature files using format: `- [Feature: Name](../intent/feature-[name].md)`
+- Use markdown link format: `- [Type: Name](path/to/file.md)`
+```
+
+---
+
+## Execute: Build the Feature
+
+After files are created, use this prompt to implement:
+
+```
+Implement the feature following @context/intent/feature-[name].md 
+and @context/decisions/[number]-[name].md
+
+**MANDATORY: Follow Plan, Approve, Execute pattern:**
+
+1. **PLAN** (Do this first - DO NOT SKIP):
+   - Load @context/.context-mesh-framework.md (if exists) to understand framework rules
+   - Load @context/intent/project-intent.md (always)
+   - Load @context/intent/feature-[name].md
+   - Load @context/decisions/[number]-[name].md
+   - Load relevant patterns from @context/knowledge/patterns/ (if any)
+   - Load relevant anti-patterns from @context/knowledge/anti-patterns/ (if any)
+   - Analyze existing codebase structure
+   - Verify ADR exists (decision file must exist before implementation)
+   - Explain your implementation approach based on the decision
+   - List ALL files you will create
+   - List ALL files you will modify
+   - Show code structure/architecture you will create
+   - Explain how you'll follow the documented decision and patterns
+   - Present the complete plan clearly
+
+2. **APPROVE** (Wait for approval - DO NOT SKIP):
+   - Ask explicitly: "Should I proceed with this implementation plan?"
+   - DO NOT write any code until user approves
+   - If user requests changes, update plan and ask again
+
+3. **EXECUTE** (Only after approval):
+   - Implement according to approved plan
+   - Follow all context files strictly
+   - Respect decisions from @context/decisions/
+   - Use patterns from @context/knowledge/patterns/
+   - Avoid anti-patterns from @context/knowledge/anti-patterns/
+   - Create/modify only files from approved plan
+```
+
+---
+
+## What This Prompt Does
+
+- **Checks if feature exists** - Verifies if feature-[name].md already exists before creating
+- **Creates feature intent** - Documents what and why
+- **Creates complete decision (ADR)** - Documents technical approach with context, rationale, and alternatives (required before implementation)
+- **Updates project-intent.md** - Adds new feature to "Related" section for traceability
+- **Updates changelog** - Records the new feature
+- **Updates AGENTS.md** - Keeps references current
+
+**Important**: If the feature already exists, the prompt will inform you to use `update-feature.md` instead. This prevents duplicate features and preserves context.
+
+---
+
+## Next Steps
+
+- **Feature changed?** Use `update-feature.md`
+- **Found a bug?** Use `fix-bug.md`
+- **Done implementing?** AI updates context automatically (if AGENTS.md exists) or use `learn-update.md`

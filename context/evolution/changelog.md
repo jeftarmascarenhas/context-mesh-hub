@@ -4,6 +4,114 @@ This changelog records what changed in the Context Mesh Hub project, why it chan
 
 ---
 
+## 2026-01-28 - Hub CLI Re-Architecture (Python + AI Agent Selection)
+
+**What Changed:**
+- Re-architected Hub CLI from Node.js to Python for stack unification
+- Implemented AI agent selection system (`cm init --ai cursor|copilot|gemini|claude`)
+- Added persistent configuration in `~/.context-mesh-hub/config.json`
+- Created rich terminal UI with Typer + Rich
+
+**New Commands:**
+- `cm init --ai <agent>` - Initialize and choose AI backend
+- `cm config` - Show MCP configuration for editors
+- `cm agents` - List supported AI agents with status
+- `cm doctor` - Run diagnostics
+- `cm ui` - Start UI dashboard
+- `cm` - Interactive menu
+
+**AI Agent Support:**
+- **IDE Agents**: Cursor, GitHub Copilot (use MCP in editor)
+- **CLI Agents**: Gemini CLI, Claude Code (use `cm chat` in terminal)
+
+**Why:**
+- Stack unification: Python for hub-core and hub-cli
+- Better integration with FastMCP
+- Simpler dependency management
+- Inspired by spec-kit's `specify init --ai` pattern
+- Clear separation between IDE and CLI agents
+
+**Technical Details:**
+- Python 3.12+ with Typer, Rich, httpx, pydantic
+- Configuration stored in `~/.context-mesh-hub/`
+- Agent detection via `shutil.which()`
+- MCP config generation for Cursor, VS Code, Claude Desktop
+
+**Related:**
+- [Feature: Hub CLI](../intent/feature-hub-cli.md)
+- [Decision: Tech Stack](../decisions/001-tech-stack.md)
+
+---
+
+## 2026-01-28 - Hub UI MCP Client Implementation
+
+**What Changed:**
+- Created `hub-ui/src/lib/mcp-client.ts` - MCP client with file system fallback
+- Implements all methods required by UI pages:
+  - `validate()` - Validate context structure
+  - `getProjectIntent()` - Read project-intent.md
+  - `getFeatureIntents()` - List all feature-*.md files
+  - `getDecisions()` - List all decisions/*.md files
+  - `getChangelog()` - Read changelog.md
+  - `getPatterns()` / `getAntiPatterns()` - Read knowledge artifacts
+  - `getAgents()` - Read agent definitions
+  - `callTool(name, params)` - Generic MCP tool interface
+  - `getContextSummary()` - Aggregated dashboard data
+- File system fallback reads directly from `context/` directory
+- Full TypeScript types for ContextArtifact, ValidationResult, MCPError
+
+**Why:**
+- Complete the UI implementation (was missing critical piece)
+- Enable UI to display context without running MCP server
+- Maintain MCP-compatible interface for future HTTP transport
+- Support read-only by default (per Decision 006)
+
+**Technical Details:**
+- Uses `CONTEXT_MESH_PATH` env var or auto-discovers `context/` directory
+- Safe file reading with error handling
+- Async/await throughout for performance
+- Singleton export for convenience
+
+**Related:**
+- [Feature: Hub UI](../intent/feature-hub-ui.md)
+- [Decision: UI Read-Only by Default](../decisions/006-ui-readonly-by-default.md)
+- [Decision: Tech Stack](../decisions/001-tech-stack.md)
+
+---
+
+## 2026-01-28 - Chat-First MCP Tools Implementation
+
+**What Changed:**
+- Added 7 new high-level MCP tools for chat-first experience:
+  - `cm_help` - Show available workflows and examples
+  - `cm_status` - Get project status with validation and guidance
+  - `cm_list_features` - List all features with status
+  - `cm_list_decisions` - List all decisions (ADRs) with status
+  - `cm_add_feature` - Add feature intent (returns ready markdown)
+  - `cm_fix_bug` - Document bug (returns ready markdown)
+  - `cm_create_decision` - Create ADR (returns ready markdown)
+- Updated README with chat-first tools documentation
+
+**Why:**
+- Transform Hub from "MCP API" to "Conversational Interface"
+- Enable users to say "add a feature" and get ready-to-use artifacts
+- Reduce technical knowledge required to use Hub in chat
+- Make MCP "shine" in chat interfaces (Cursor, Claude, Copilot)
+- Support the vision of "Operational System of Context"
+
+**Technical Details:**
+- Discovery tools return structured guidance
+- Create tools render complete markdown (not templates + inputs)
+- All tools follow existing naming convention (cm_*)
+- Maintains backward compatibility with low-level tools
+
+**Related:**
+- [Feature: Hub Core](../intent/feature-hub-core.md)
+- [Decision: MCP Tool Contracts](../decisions/002-mcp-tool-contracts.md)
+- [Decision: Prompt Pack Resolution](../decisions/010-prompt-pack-resolution-and-update-model.md)
+
+---
+
 ## 2026-01-27 - Initial Context Mesh Bootstrap
 
 **What Changed:**

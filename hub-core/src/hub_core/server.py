@@ -28,15 +28,29 @@ def create_server(repo_root: Optional[Path] = None) -> FastMCP:
 
 def main():
     """Main entry point for the MCP server."""
+    import os
+    
     # Allow repo root to be passed as command-line argument
     repo_root = None
     if len(sys.argv) > 1:
         repo_root = Path(sys.argv[1]).resolve()
+    else:
+        # Try to auto-detect from environment or cwd
+        # CONTEXT_MESH_REPO_ROOT env var takes priority
+        env_root = os.environ.get("CONTEXT_MESH_REPO_ROOT")
+        if env_root:
+            repo_root = Path(env_root).resolve()
+        else:
+            # Use current working directory (set by Cursor to workspace)
+            cwd = Path.cwd()
+            if (cwd / "context").exists():
+                repo_root = cwd
     
     server = create_server(repo_root)
     
-    # Run the server
-    server.run()
+    # Run the server in stdio mode (for MCP clients like Cursor)
+    # show_banner=False to avoid rich UI when running as MCP server
+    server.run(transport="stdio", show_banner=False)
 
 
 if __name__ == "__main__":

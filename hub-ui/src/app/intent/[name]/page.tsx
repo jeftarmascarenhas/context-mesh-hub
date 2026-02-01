@@ -1,23 +1,32 @@
 /** Feature intent detail page. */
 
-import { MCPClient } from "@/lib/mcp-client";
-import ReactMarkdown from "react-markdown";
+import { MCPClient, ContextArtifact, MCPError } from "@/lib/mcp-client";
+import { MarkdownRenderer } from "@/components/MarkdownRenderer";
+
+function isError(result: unknown): result is MCPError {
+  return typeof result === "object" && result !== null && "error" in result;
+}
+
+function isArtifact(result: unknown): result is ContextArtifact {
+  return typeof result === "object" && result !== null && "content" in result;
+}
 
 export default async function FeatureIntentPage({
   params,
 }: {
-  params: { name: string };
+  params: Promise<{ name: string }>;
 }) {
+  const { name } = await params;
   const client = new MCPClient();
   const feature =
-    params.name === "project"
+    name === "project"
       ? await client.getProjectIntent()
       : await client.callTool("context_read", {
           artifact_type: "feature_intent",
-          name: params.name,
+          name: name,
         });
   
-  if ("error" in feature) {
+  if (isError(feature)) {
     return (
       <div className="px-4 py-6 sm:px-0">
         <h1 className="text-3xl font-bold text-gray-900 mb-6">
@@ -27,6 +36,8 @@ export default async function FeatureIntentPage({
       </div>
     );
   }
+  
+  const content = isArtifact(feature) ? feature.content : "";
   
   return (
     <div className="px-4 py-6 sm:px-0">
@@ -40,9 +51,7 @@ export default async function FeatureIntentPage({
       </div>
       
       <div className="bg-white shadow rounded-lg p-6">
-        <div className="prose max-w-none">
-          <ReactMarkdown>{feature.content || ""}</ReactMarkdown>
-        </div>
+        <MarkdownRenderer content={content} />
       </div>
     </div>
   );

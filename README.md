@@ -1,58 +1,249 @@
-# Context Mesh Hub (context-mesh-hub)
+<div align="center">
+    <h1>🌱 Context Mesh Hub</h1>
+    <h3><em>Context is Primary. Code is Manifestation.</em></h3>
+</div>
 
-**Context is Primary. Code is Manifestation.**
+<p align="center">
+    <strong>An open source framework that standardizes Context Engineering processes for AI-assisted development.</strong>
+</p>
+
+<p align="center">
+    <a href="https://github.com/jeftarmascarenhas/context-mesh-hub/stargazers"><img src="https://img.shields.io/github/stars/jeftarmascarenhas/context-mesh-hub?style=social" alt="GitHub stars"/></a>
+    <a href="https://github.com/jeftarmascarenhas/context-mesh-hub/blob/main/LICENSE"><img src="https://img.shields.io/github/license/jeftarmascarenhas/context-mesh-hub" alt="License"/></a>
+</p>
+
+---
+
+## Table of Contents
+
+- [🤔 What is Context Mesh Hub?](#-what-is-context-mesh-hub)
+- [⚡ Get Started](#-get-started)
+- [🤖 Supported AI Agents](#-supported-ai-agents)
+- [🔧 CLI Reference](#-cli-reference)
+- [📚 Core Philosophy](#-core-philosophy)
+- [🔧 Prerequisites](#-prerequisites)
+- [📖 Learn More](#-learn-more)
+- [👥 Maintainers](#-maintainers)
+- [📄 License](#-license)
+
+## 🤔 What is Context Mesh Hub?
 
 Context Mesh Hub is a **local-first, repo-first, MCP-first** system that turns AI-assisted development into a **governed, repeatable process**.
 
 It standardizes how teams create, validate, execute, and evolve **context artifacts** so any AI agent (Cursor, Copilot, Claude, etc.) can operate safely and consistently.
 
----
+**Key differences from other tools:**
 
-## Why
+| Feature | Context Mesh Hub | spec-kit |
+|---------|------------------|----------|
+| Focus | Context Strategy Management | Spec-Driven Development |
+| Interface | **MCP** (in editor) + CLI | CLI + Slash Commands |
+| Output | Context artifacts | Code from specs |
+| Workflow | Intent → Build → Learn | Specify → Plan → Implement |
 
-AI coding without governance creates:
-- hidden assumptions
-- silent scope creep
-- inconsistent outcomes
-- untraceable evolution
-- brittle codebases
+## ⚡ Get Started
 
-Context Mesh Hub solves this by making **context explicit, versioned, and enforceable**.
+### 1. Install Context Mesh Hub CLI
 
----
+Choose your preferred installation method:
 
-## What It Is
+#### Option 1: Persistent Installation (Recommended)
 
-A local system that:
-- **visualizes** and validates Context Mesh artifacts (`context/`)
-- provides a **Build Protocol** inside the Build phase: **Plan → Approve → Execute**
-- supports **brownfield extraction** (evidence-based context from legacy repos)
-- enables **explicit learning** and **controlled evolution**
+Install once and use everywhere with [uv](https://docs.astral.sh/uv/):
 
----
+```bash
+uv tool install context-mesh-hub-cli --from git+https://github.com/jeftarmascarenhas/context-mesh-hub.git#subdirectory=hub-cli
+```
 
-## v1 Constraints
+> **Note**: If `cm` is not found, add `~/.local/bin` to your PATH:
+> ```bash
+> export PATH="$HOME/.local/bin:$PATH"
+> ```
 
-- Repo-first (no database)
-- UI runs locally (Next.js)
-- MCP is the authority gate for actions
-- Agents are operators, never authorities
+Then use the tool directly:
 
----
+```bash
+# Initialize with your AI agent
+cm init --ai cursor
 
-## Core Workflow (Context Mesh)
+# Get MCP configuration
+cm config
 
-**Intent → Build → Learn**
+# Check installed agents
+cm agents
 
-1) **Intent**: define WHAT and WHY (feature intents + acceptance criteria)  
-2) **Build**: execute with governance boundaries (decisions + patterns)  
-3) **Learn**: formalize outcomes into reusable knowledge and evolution logs
+# Run diagnostics
+cm doctor
+```
 
----
+To upgrade:
+
+```bash
+uv tool install context-mesh-hub-cli --force --from git+https://github.com/jeftarmascarenhas/context-mesh-hub.git#subdirectory=hub-cli
+```
+
+To uninstall:
+
+```bash
+uv tool uninstall context-mesh-hub-cli
+```
+
+#### Option 2: One-time Usage
+
+Run directly without installing:
+
+```bash
+uvx --from git+https://github.com/jeftarmascarenhas/context-mesh-hub.git#subdirectory=hub-cli cm --help
+```
+
+#### Option 3: Development Installation
+
+Clone and install for development:
+
+```bash
+git clone https://github.com/jeftarmascarenhas/context-mesh-hub.git
+cd context-mesh-hub
+./install.sh
+source .venv/bin/activate
+```
+
+**Benefits of persistent installation:**
+
+- Tool stays installed and available in PATH
+- No need to clone repositories
+- Better tool management with `uv tool list`, `uv tool upgrade`, `uv tool uninstall`
+- Cleaner shell configuration
+
+### 2. Initialize with your AI agent
+
+```bash
+cm init --ai cursor      # For Cursor IDE
+cm init --ai copilot     # For VS Code + GitHub Copilot
+cm init --ai gemini      # For Gemini CLI
+cm init --ai claude      # For Claude Code
+```
+
+### 3. Configure MCP in your editor
+
+```bash
+cm config
+```
+
+Copy the JSON output and paste it in your editor's MCP settings:
+
+- **Cursor**: Settings → Features → MCP Servers
+- **VS Code + Copilot**: Settings → GitHub Copilot → MCP
+- **Claude Desktop**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+
+### 4. Use Context Mesh in your AI editor
+
+Once MCP is configured, you can use Context Mesh tools directly in your editor's chat:
+
+```
+@context-mesh-hub cm_status
+@context-mesh-hub cm_help
+@context-mesh-hub cm_add_feature
+```
+
+## 🤖 Supported AI Agents
+
+| Agent | Type | Support | Notes |
+|-------|------|---------|-------|
+| [Cursor](https://cursor.sh/) | IDE | ✅ | MCP in editor chat |
+| [GitHub Copilot](https://github.com/features/copilot) | IDE | ✅ | MCP in VS Code |
+| [Claude Desktop](https://claude.ai/download) | IDE | ✅ | MCP in desktop app |
+| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | CLI | ✅ | Terminal chat |
+| [Claude Code](https://www.anthropic.com/claude-code) | CLI | ✅ | Terminal chat |
+
+## 🔧 CLI Reference
+
+The `cm` command supports the following options:
+
+### Commands
+
+| Command | Description |
+|---------|-------------|
+| `init` | Initialize Context Mesh Hub with your preferred AI agent |
+| `config` | Show MCP configuration for AI editors |
+| `agents` | List supported AI agents and their status |
+| `doctor` | Run diagnostics and check environment |
+| `ui` | Start the UI dashboard |
+| `chat` | Chat with Context Mesh Hub (requires CLI agent) |
+
+### `cm init` Options
+
+| Option | Description |
+|--------|-------------|
+| `--ai` | AI agent to use: `cursor`, `copilot`, `gemini`, `claude` |
+
+### Examples
+
+```bash
+# Initialize with Cursor
+cm init --ai cursor
+
+# Initialize with GitHub Copilot
+cm init --ai copilot
+
+# Show MCP configuration
+cm config
+
+# List agents and status
+cm agents
+
+# Run diagnostics
+cm doctor
+
+# Start UI dashboard
+cm ui
+```
+
+### MCP Tools Available
+
+After configuring MCP, these tools are available in your editor:
+
+| Tool | Description |
+|------|-------------|
+| `cm_help` | Show available workflows and examples |
+| `cm_status` | Get project status with validation |
+| `cm_list_features` | List all features with status |
+| `cm_list_decisions` | List all decisions (ADRs) |
+| `cm_add_feature` | Add a new feature intent |
+| `cm_fix_bug` | Create a bug fix intent |
+| `cm_create_decision` | Create a new decision (ADR) |
+
+## 📚 Core Philosophy
+
+Context Mesh Hub follows the **Intent → Build → Learn** workflow:
+
+1. **Intent**: Define WHAT and WHY (feature intents + acceptance criteria)
+2. **Build**: Execute with governance (Plan → Approve → Execute)
+3. **Learn**: Formalize outcomes into reusable knowledge
+
+**Key principles:**
+
+- **Context is primary** - Code is its manifestation
+- **Local-first** - No cloud dependencies, no login required
+- **Repo-first** - All artifacts in `context/` directory, versioned with Git
+- **MCP-first** - AI agents interact via Model Context Protocol
+- **Agents are operators, not authorities** - Human approval required
+
+## 🔧 Prerequisites
+
+- **Python 3.12+**
+- **uv** for package management ([install](https://docs.astral.sh/uv/))
+- **Git**
+- Supported AI editor (Cursor, VS Code + Copilot, Claude Desktop)
+
+## 📖 Learn More
+
+- **[Context Mesh Framework](https://github.com/jeftarmascarenhas/context-mesh)** - The underlying methodology
+- **[AGENTS.md Standard](https://agents.md/)** - AI agent instructions standard
+- **[Model Context Protocol](https://modelcontextprotocol.io/)** - MCP specification
 
 ## Repository Structure
 
-```txt
+```
 context/
 ├── intent/
 │   ├── project-intent.md
@@ -68,139 +259,14 @@ context/
     └── changelog.md
 ```
 
-# How Agents Work Here
+## 👥 Maintainers
 
-**Agents (Cursor/Copilot/Claude/etc.) must follow:**
+- Jeftar Mascarenhas ([@jeftarmascarenhas](https://github.com/jeftarmascarenhas))
 
-- AGENTS.md (operational contract)
+## 💬 Support
 
-- context/.context-mesh-framework.md (kernel rules)
+For support, please open a [GitHub issue](https://github.com/jeftarmascarenhas/context-mesh-hub/issues/new).
 
-- execution playbooks in context/agents/
+## 📄 License
 
-**Execution agents**
-
-- agent-context-bootstrap.md
-
-- agent-brownfield-extractor.md
-
-- agent-feature-executor.md
-
-- agent-learn-sync.md (explicit, never automatic)
-
-# Quick Start
-```bash
-pnpm install
-pnpm dev
-pnpm test
-pnpm build
-```
-
-# Build Protocol
-
-Inside Build, execution is gated:
-
-1. Plan — generate an explicit execution plan
-
-2. Approve — human validates plan and boundaries
-
-3. Execute — agent implements only what was approved
-
-No implicit scope expansion.
-No silent evolution.
-
-# Brownfield (Legacy Repos)
-
-**Context Mesh Hub can enter large codebases safely by:**
-
-- mapping repository surfaces
-
-- extracting observable behaviors
-
-- tagging constraints and risks
-
-- generating draft context artifacts with evidence
-
-No refactors. No invented intent.
-
-# License
-
-Open source (TBD).
-
-## References
-
-Context Mesh Framework: https://github.com/jeftarmascarenhas/context-mesh
-AGENTS.md standard: https://agents.md/
-
-
----
-
-## 3) Build Phase — passo a passo com execution flow (Context Mesh Hub)
-
-Abaixo um fluxo “copy/paste mental” que você pode colocar no README depois como **Build Playbook**.
-
-### Execution Flow (Hub v1)
-
-1. **Load Context Bundle (MCP)**
-   - Load:
-     - `@context/.context-mesh-framework.md`
-     - `@context/intent/project-intent.md`
-     - target `@context/intent/feature-*.md`
-     - relevant `@context/decisions/*.md`
-     - patterns/anti-patterns if referenced  
-   ↓
-
-2. **Execute Agent 1: Context Bootstrap**
-   - `@context/agents/agent-context-bootstrap.md`  
-   → **Verify** (structure + required files)  
-   → **Approve** (human confirms repo is compliant)  
-   ↓
-
-3. **(Optional, Brownfield Only) Execute Agent 2: Brownfield Extractor**
-   - `@context/agents/agent-brownfield-extractor.md`  
-   → **Verify** (evidence-based report + DRAFT artifacts)  
-   → **Approve** (human accepts/rejects drafts into context)  
-   ↓
-
-4. **Execute Agent 3: Feature Executor (Mode: Plan)**
-   - `@context/agents/agent-feature-executor.md` in **Plan** mode  
-   → Output: plan, affected files, risks, assumptions  
-   → **Verify** (plan maps to Acceptance Criteria)  
-   → **Approve** (human approves plan boundaries)  
-   ↓
-
-5. **Execute Agent 3: Feature Executor (Mode: Execute)**
-   - `@context/agents/agent-feature-executor.md` in **Execute** mode  
-   → Implement only approved scope  
-   → **Verify** (build/tests/manual check)  
-   → **Approve** (human validates Acceptance Criteria met)  
-   ↓
-
-6. **Execute Agent 4: Learn Sync (Explicit)**
-   - `@context/agents/agent-learn-sync.md`  
-   → Propose learning artifacts (taxonomy-driven)  
-   → Propose changelog update  
-   → **Verify** (evidence + confidence + impact)  
-   → **Approve** (human accepts updates to context artifacts)  
-   ↓
-
-7. **Final Validation**
-   - Full app run / smoke test (as applicable)
-   - Confirm context is not stale:
-     - feature marked complete/partial
-     - decisions outcomes updated
-     - changelog updated
-
----
-
-### Optional “Enterprise Extensions” (v2+)
-
-- **Agent: Testing** (mandatory in enterprise repos)
-  → Verify → Approve  
-- **Agent: CI/CD** (pipeline scaffolding)
-  → Verify → Approve  
-- **Agent: Security / Compliance** (policy scanning)
-  → Verify → Approve  
-
----
-
+This project is licensed under the terms of the MIT open source license.

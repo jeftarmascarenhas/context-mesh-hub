@@ -1,7 +1,7 @@
 /** Evolution/changelog page. */
 
 import { MCPClient } from "@/lib/mcp-client";
-import ReactMarkdown from "react-markdown";
+import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 
 export default async function EvolutionPage() {
   const client = new MCPClient();
@@ -23,9 +23,7 @@ export default async function EvolutionPage() {
       <h1 className="text-3xl font-bold text-gray-900 mb-6">Evolution</h1>
       
       <div className="bg-white shadow rounded-lg p-6">
-        <div className="prose max-w-none">
-          <ReactMarkdown>{changelog.content || ""}</ReactMarkdown>
-        </div>
+        <MarkdownRenderer content={changelog.content || ""} />
       </div>
     </div>
   );

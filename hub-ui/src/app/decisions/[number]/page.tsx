@@ -1,20 +1,29 @@
 /** Decision detail page. */
 
-import { MCPClient } from "@/lib/mcp-client";
-import ReactMarkdown from "react-markdown";
+import { MCPClient, ContextArtifact, MCPError } from "@/lib/mcp-client";
+import { MarkdownRenderer } from "@/components/MarkdownRenderer";
+
+function isError(result: unknown): result is MCPError {
+  return typeof result === "object" && result !== null && "error" in result;
+}
+
+function isArtifact(result: unknown): result is ContextArtifact {
+  return typeof result === "object" && result !== null && "content" in result;
+}
 
 export default async function DecisionPage({
   params,
 }: {
-  params: { number: string };
+  params: Promise<{ number: string }>;
 }) {
+  const { number } = await params;
   const client = new MCPClient();
   const decision = await client.callTool("context_read", {
     artifact_type: "decision",
-    name: params.number,
+    name: number,
   });
   
-  if ("error" in decision) {
+  if (isError(decision)) {
     return (
       <div className="px-4 py-6 sm:px-0">
         <h1 className="text-3xl font-bold text-gray-900 mb-6">
@@ -24,6 +33,8 @@ export default async function DecisionPage({
       </div>
     );
   }
+  
+  const content = isArtifact(decision) ? decision.content : "";
   
   return (
     <div className="px-4 py-6 sm:px-0">
@@ -37,9 +48,7 @@ export default async function DecisionPage({
       </div>
       
       <div className="bg-white shadow rounded-lg p-6">
-        <div className="prose max-w-none">
-          <ReactMarkdown>{decision.content || ""}</ReactMarkdown>
-        </div>
+        <MarkdownRenderer content={content} />
       </div>
     </div>
   );

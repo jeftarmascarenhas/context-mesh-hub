@@ -1,7 +1,7 @@
 /** Project intent detail page. */
 
 import { MCPClient } from "@/lib/mcp-client";
-import ReactMarkdown from "react-markdown";
+import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 
 export default async function ProjectIntentPage() {
   const client = new MCPClient();
@@ -30,9 +30,7 @@ export default async function ProjectIntentPage() {
       </div>
       
       <div className="bg-white shadow rounded-lg p-6">
-        <div className="prose max-w-none">
-          <ReactMarkdown>{projectIntent.content || ""}</ReactMarkdown>
-        </div>
+        <MarkdownRenderer content={projectIntent.content || ""} />
       </div>
     </div>
   );

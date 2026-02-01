@@ -68,15 +68,12 @@ class ContextLoader:
         
         Returns:
             Index dictionary with all loaded artifacts.
-            
-        Raises:
-            FileNotFoundError: If context/ directory doesn't exist.
+            Empty index if context/ doesn't exist (allows greenfield projects).
         """
+        # Allow MCP to work without context/ - supports greenfield projects
         if not self.context_dir.exists():
-            raise FileNotFoundError(
-                f"Context directory not found: {self.context_dir}. "
-                "Repository may not be Context Mesh compliant."
-            )
+            self._loaded = True
+            return self._index  # Return empty index, don't raise error
         
         # Load project intent
         project_intent_path = self.context_dir / "intent" / "project-intent.md"

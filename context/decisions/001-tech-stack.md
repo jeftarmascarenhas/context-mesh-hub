@@ -33,15 +33,16 @@ Adopt a **multi-layered architecture** with clear separation of responsibilities
 ---
 
 ### CLI (Bootstrap & Runtime Control)
-- **Runtime**: Node.js (Active LTS)
-- **Language**: TypeScript
-- **Package Manager**: pnpm
+- **Runtime**: Python 3.12+
+- **Framework**: Typer + Rich
+- **Package Manager**: uv (or pip)
 
 **Responsibilities**
-- Initialize Context Mesh Hub in a repository
-- Start and stop the MCP server
-- Provide environment diagnostics (`doctor`)
-- Open the local UI
+- Initialize Context Mesh Hub with AI agent selection (`cm init --ai`)
+- Generate MCP configuration for editors (`cm config`)
+- Provide environment diagnostics (`cm doctor`)
+- Start the local UI (`cm ui`)
+- Support AI agent backends: Cursor, Copilot, Gemini CLI, Claude Code
 - Act as a thin orchestration layer only
 
 ---
@@ -66,13 +67,19 @@ All context artifacts live under the `context/` directory and are versioned usin
 
 ## Rationale
 
-- **Python + MCP** provides strong alignment with AI tooling ecosystems and structured analysis workflows
-- **Node.js + TypeScript** offers excellent DX for CLI tooling and cross-platform support
+- **Python for MCP + CLI** provides stack unification and strong alignment with AI tooling ecosystems
+- **FastMCP** is the standard for MCP server implementation in Python
+- **Typer + Rich** provides excellent DX for CLI with beautiful terminal output
 - **Next.js** enables a modern, maintainable UI without coupling business logic to the frontend
 - **Repository-first storage** ensures transparency, auditability, and easy adoption
 - Clear separation of concerns reduces complexity and improves long-term maintainability
 
 ## Alternatives Considered
+
+### Node.js CLI + Python MCP (Original v1)
+- **Pros**: Familiar CLI tooling, TypeScript type safety
+- **Cons**: Two languages to maintain, complex dependency management
+- **Decision**: Rejected in favor of Python unification (2026-01-28)
 
 ### Single-stack Node.js implementation
 - **Pros**: Fewer languages, simpler tooling
@@ -96,9 +103,10 @@ All context artifacts live under the `context/` directory and are versioned usin
 - High portability and adoption potential
 - Safe, inspectable, and auditable system
 - Clear layering between runtime, orchestration, and UX
+- **Stack unification**: Python for MCP and CLI simplifies maintenance
 
 ### Trade-offs
-- Multi-language maintenance
+- Requires Python 3.12+ (may need installation on some systems)
 - Requires discipline in context management
 - UI depends on MCP cooperation rather than direct file access
 

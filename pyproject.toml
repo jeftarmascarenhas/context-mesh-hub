@@ -1,0 +1,26 @@
+[project]
+name = "context-mesh-hub-dev"
+version = "0.1.0"
+description = "Context Mesh Hub - Development Installation"
+requires-python = ">=3.12"
+
+# This is a meta-package for development
+# For production, install hub-cli which includes everything
+
+dependencies = [
+    # Will be installed from local paths in development
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "ruff>=0.4.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# Note: This pyproject.toml is for development only
+# For installation instructions, see README.md

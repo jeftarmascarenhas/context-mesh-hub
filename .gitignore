@@ -1,4 +1,6 @@
 # Context Mesh Hub - Root .gitignore
+context-mesh-1.1.0.zip
+# context-mesh-1.1.0
 
 # Python (hub-core)
 __pycache__/
