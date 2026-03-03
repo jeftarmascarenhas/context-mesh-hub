@@ -124,11 +124,13 @@ The Hub UI acts as a **situational awareness layer** for developers and teams, m
 - [Feature: Hub Learn Sync](./feature-hub-learn-sync.md)
 - [Decision: UI Read-Only by Default](../decisions/006-ui-readonly-by-default.md)
 - [Decision: Prompt Pack Resolution and Update Model](../decisions/010-prompt-pack-resolution-and-update-model.md)
+- [Decision: Context Mesh Evolution Strategy](../decisions/012-context-mesh-evolution-strategy.md)
 
 ## Status
 
 - **Created**: 2026-01-26 (Phase: Intent)
 - **Completed**: 2026-01-27 (Phase: Build)
+- **Updated**: 2026-01-31 (Phase: Build) - Added MCP client, hooks, relationship graph, build dashboard
 - **Status**: Completed
 
 ## Implementation Notes

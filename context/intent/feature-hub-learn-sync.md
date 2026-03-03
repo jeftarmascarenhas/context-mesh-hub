@@ -133,7 +133,6 @@ Learning is never automatic. It is **triggered, reviewed, and accepted** by huma
 - [Project Intent](./project-intent.md)
 - [Feature: Hub Core](./feature-hub-core.md)
 - [Feature: Hub Build Protocol](./feature-hub-build-protocol.md)
-- [Feature: Hub UI](./feature-hub-ui.md)
 - [Decision: Learning Artifact Taxonomy](../decisions/008-learning-artifact-taxonomy.md)
 - [Decision: Prompt Pack Resolution and Update Model](../decisions/010-prompt-pack-resolution-and-update-model.md)
 - [Evolution Log](../evolution/changelog.md)

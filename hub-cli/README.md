@@ -1,159 +1,66 @@
 # Context Mesh Hub CLI
 
-**Framework that standardizes Context Engineering processes**
+The **CLI** part of Context Mesh Hub — one of two components (CLI + MCP server). Install Context Mesh Hub from the **root repo**; the CLI (`cm`) is the main entry point.
 
-The CLI provides setup, configuration, and natural language interaction with Context Mesh Hub.
+**→ Install and Get Started:** See the [root README](../README.md).
 
-## Installation
+---
 
-### With uv (recommended)
+## What this package is
 
-```bash
-uv tool install context-mesh-hub
-```
+- **`cm`** / **`cm init`** – Interactive setup menu (register project, MCP config, slash commands, doctor, agents)
+- **MCP server** – Installed with the CLI (hub-core); editors talk to it via MCP
 
-### With pip
+You do **not** install hub-cli alone for normal use. Use the root install so you get CLI + MCP in one go.
 
-```bash
-pip install context-mesh-hub
-```
-
-### From source (development)
+## Installation (from root)
 
 ```bash
-cd hub-cli
-uv sync
-uv run cm
+# Persistent install (recommended)
+uv tool install context-mesh-hub-cli --from git+https://github.com/jeftarmascarenhas/context-mesh-hub.git#subdirectory=hub-cli
 ```
 
-## Usage
-
-### Interactive Setup
-
-Run without arguments to start the interactive setup:
+Or from source:
 
 ```bash
-cm
+git clone https://github.com/jeftarmascarenhas/context-mesh-hub.git
+cd context-mesh-hub
+./install.sh
+source .venv/bin/activate   # if using venv
 ```
 
-This will:
-1. Check your environment (Python, dependencies)
-2. Show the MCP configuration to copy to your AI editor
-3. Provide options to start UI, run diagnostics, or chat
-
-### Commands
+## Quick reference
 
 | Command | Description |
-|---------|-------------|
-| `cm` | Interactive setup and menu |
-| `cm config` | Show MCP configuration for AI editors |
-| `cm doctor` | Run diagnostics and check environment |
-| `cm ui` | Start the UI dashboard |
-| `cm chat` | Chat with natural language |
-| `cm chat "message"` | Execute a natural language command |
+|--------|-------------|
+| `cm` | Same as `cm init` (interactive setup) |
+| `cm init` | Interactive setup: register project, MCP config, slash commands, UI, doctor, agents |
+| `cm config` | Get MCP config (interactive or `--editor cursor\|copilot\|claude\|gemini`) |
+| `cm config --raw` | Print only JSON (use with `--editor`) |
+| `cm setup-commands` | Install slash commands (interactive or `--agent cursor\|copilot\|claude\|gemini`) |
+| `cm doctor` | Run diagnostics |
+| `cm ui` | Start the local UI |
+| `cm agents` | List supported agents |
+| `cm projects list` | List registered projects |
+| `cm projects add [path]` | Register a project (default: current dir) |
+| `cm projects remove [path]` | Unregister a project |
 
-### Natural Language Chat
+Slash commands (`/cm-add-feature`, `/cm-build`, etc.) are **not** run from the CLI. They are installed into your AI agent’s chat via `cm setup-commands` (e.g. Cursor → `.cursor/commands/`).
 
-The CLI supports natural language commands when an LLM API key is configured:
+## MCP configuration
 
-```bash
-# Interactive chat
-cm chat
+Each editor uses a different JSON shape. Use `cm config` (interactive) or `cm config --editor cursor` (or `copilot`, `claude`, `gemini`) to get the right JSON.
 
-# Single command
-cm chat "add a feature for user authentication"
-cm chat "what features do we have?"
-cm chat "show project status"
-```
-
-### LLM Configuration
-
-Set environment variables to enable natural language:
-
-```bash
-# OpenAI (default)
-export OPENAI_API_KEY=sk-...
-
-# Anthropic
-export ANTHROPIC_API_KEY=sk-ant-...
-export CM_LLM_PROVIDER=anthropic
-
-# Ollama (local, no API key needed)
-export CM_LLM_PROVIDER=ollama
-export CM_LLM_MODEL=llama3.2
-
-# OpenRouter
-export OPENROUTER_API_KEY=sk-or-...
-export CM_LLM_PROVIDER=openrouter
-```
-
-## MCP Configuration
-
-After running `cm` or `cm config`, copy the JSON configuration to your AI editor:
-
-### Cursor
-
-Settings → Features → MCP Servers → Add
-
-### VS Code + GitHub Copilot
-
-Settings → GitHub Copilot → MCP Servers
-
-### Claude Desktop
-
-Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "context-mesh-hub": {
-      "command": "python",
-      "args": ["-m", "hub_core.server"]
-    }
-  }
-}
-```
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         USER                                    │
-│                                                                 │
-│   ┌─────────────┐              ┌─────────────────────────────┐ │
-│   │   CLI (cm)  │              │  Chat (Cursor/Copilot/etc)  │ │
-│   │  Python+uv  │              │                             │ │
-│   └──────┬──────┘              └──────────────┬──────────────┘ │
-│          │                                    │                 │
-│          ▼                                    ▼                 │
-│   ┌──────────────────────────────────────────────────────────┐ │
-│   │                    MCP SERVER (hub-core)                 │ │
-│   │                     Python + FastMCP                     │ │
-│   └──────────────────────────────────────────────────────────┘ │
-│                              │                                  │
-│                              ▼                                  │
-│                    ┌─────────────────┐                         │
-│                    │  context/ files │                         │
-│                    │  (repo-first)   │                         │
-│                    └─────────────────┘                         │
-└─────────────────────────────────────────────────────────────────┘
-```
+- **Cursor / Claude / Gemini:** `mcpServers`
+- **VS Code GitHub Copilot:** `servers` (use `cm config --editor copilot`)
 
 ## Development
 
 ```bash
 cd hub-cli
-
-# Install dependencies
 uv sync
-
-# Run in development
 uv run cm
-
-# Run tests
 uv run pytest
-
-# Build
 uv build
 ```
 
@@ -161,7 +68,7 @@ uv build
 
 - Python 3.12+
 - uv (recommended) or pip
-- Node.js 20+ (for UI only)
+- Node.js 20+ only if you run `cm ui`
 
 ## License
 

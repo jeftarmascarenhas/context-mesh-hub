@@ -4,6 +4,90 @@ This changelog records what changed in the Context Mesh Hub project, why it chan
 
 ---
 
+## 2026-03-03 - UI Removal (CLI and MCP Focus)
+
+**What Changed:**
+- Removed `hub-ui/` directory (Next.js UI application with ~50+ files)
+- Removed `hub-core/src/hub_core/streamlit_app.py` (Streamlit UI)
+- Removed `streamlit>=1.28.0` dependency from `hub-core/pyproject.toml`
+- Removed `cm ui` command from CLI (`hub-cli/src/hub_cli/main.py`)
+- Removed UI-related functions: `ui_command()`, `check_hub_ui()`, `find_free_port()`, `_get_project_path()`
+- Removed UI checks from `cm doctor` command (hub-ui and Node.js/npm checks)
+- Removed "Start UI Dashboard" option from interactive `cm init` menu
+- Archived context files to `context/evolution/archived/`:
+  - `feature-hub-ui.md` (UI feature intent)
+  - `006-ui-readonly-by-default.md` (UI design decision)
+
+**Why:**
+- Focus exclusively on CLI and MCP as primary interfaces
+- Reduce maintenance burden and complexity
+- Eliminate Node.js dependency requirement (was barrier to adoption)
+- Simplify deployment - single stack (Python only)
+- UI was read-only and didn't provide value beyond what CLI/MCP offers
+- Streamline distribution and installation process
+
+**Technical Details:**
+- `hub-core` now has only one dependency: `fastmcp>=2.0.0,<3.0.0`
+- CLI retains all core commands: `config`, `doctor`, `init`, `projects`, `agents`, `setup-commands`
+- MCP server remains fully intact with all tools (intent, build, learn, verify)
+- Users interact via CLI commands or MCP tools in their AI editor
+
+**Related:**
+- [Feature: Hub CLI](../intent/feature-hub-cli.md)
+- [Feature: Hub Core](../intent/feature-hub-core.md)
+- [Decision: Distribution and Installation](../decisions/011-distribution-and-installation.md)
+
+---
+
+## 2026-01-31 - Context Mesh Evolution Strategy Implementation
+
+**What Changed:**
+- Implemented CLI slash commands following Intent → Build → Learn workflow
+  - `/intent` commands: new-project, add-feature, fix-bug, update, create-agent, status
+  - `/build` commands: plan, approve, execute, clarify, gate, status
+  - `/learn` commands: sync, review, apply, status, retrospective
+- Added proactive MCP tools for active intelligence
+  - `cm_lifecycle_state` - Current phase with recommendations
+  - `cm_clarify` - Pre-build clarifying questions
+  - `cm_gate_check` - Quality gate verification
+  - `cm_suggest_next` - Next action suggestions
+  - `cm_workflow_guide` - Complete workflow status
+- Implemented quality gates system for phase transitions
+  - Intent → Build gate: Feature complete, ADR exists, no validation errors
+  - Build → Learn gate: Implementation complete, tests pass, AC met
+- Enhanced Hub UI with new components
+  - MCP client library (`lib/mcp-client.ts`)
+  - React hooks (`hooks/useContextMesh.ts`)
+  - API route (`app/api/mcp/route.ts`)
+  - RelationshipGraph component (features ↔ decisions visualization)
+  - BuildDashboard component (gate status and workflow)
+  - WorkflowStatus component (lifecycle state and suggestions)
+- Created Framework v1.2.0 prompt templates
+  - `clarify.md` - Pre-build clarification questions
+  - `checkpoint.md` - Quality gate verification
+  - `retrospective.md` - Post-implementation reflection
+- Updated `.context-mesh-framework.md` with Quality Gates section
+
+**Why:**
+- Provide multiple interfaces (CLI, MCP, UI) for same functionality
+- Make the system proactive rather than purely reactive
+- Enforce governance through quality gates without blocking users
+- Maintain Context Mesh identity and a clear "Operational System of Context"
+- Create a complete "Operational System of Context"
+
+**Technical Details:**
+- CLI uses Typer with slash command subgroups
+- MCP tools analyze context state and generate recommendations
+- UI uses Next.js API routes to communicate with Python MCP server
+- Quality gates can be checked manually (prompts) or automatically (MCP tools)
+
+**Related:**
+- [Decision: Context Mesh Evolution Strategy](../decisions/012-context-mesh-evolution-strategy.md)
+- [Feature: Hub CLI](../intent/feature-hub-cli.md)
+- [Feature: Hub Core](../intent/feature-hub-core.md)
+
+---
+
 ## 2026-01-28 - Hub CLI Re-Architecture (Python + AI Agent Selection)
 
 **What Changed:**
@@ -17,18 +101,17 @@ This changelog records what changed in the Context Mesh Hub project, why it chan
 - `cm config` - Show MCP configuration for editors
 - `cm agents` - List supported AI agents with status
 - `cm doctor` - Run diagnostics
-- `cm ui` - Start UI dashboard
 - `cm` - Interactive menu
 
 **AI Agent Support:**
 - **IDE Agents**: Cursor, GitHub Copilot (use MCP in editor)
-- **CLI Agents**: Gemini CLI, Claude Code (use `cm chat` in terminal)
+- **CLI Agents**: Gemini CLI, Claude Code (use agent chat with MCP; slash commands later)
 
 **Why:**
 - Stack unification: Python for hub-core and hub-cli
 - Better integration with FastMCP
 - Simpler dependency management
-- Inspired by spec-kit's `specify init --ai` pattern
+- Interactive init pattern for AI agent selection
 - Clear separation between IDE and CLI agents
 
 **Technical Details:**
@@ -39,42 +122,6 @@ This changelog records what changed in the Context Mesh Hub project, why it chan
 
 **Related:**
 - [Feature: Hub CLI](../intent/feature-hub-cli.md)
-- [Decision: Tech Stack](../decisions/001-tech-stack.md)
-
----
-
-## 2026-01-28 - Hub UI MCP Client Implementation
-
-**What Changed:**
-- Created `hub-ui/src/lib/mcp-client.ts` - MCP client with file system fallback
-- Implements all methods required by UI pages:
-  - `validate()` - Validate context structure
-  - `getProjectIntent()` - Read project-intent.md
-  - `getFeatureIntents()` - List all feature-*.md files
-  - `getDecisions()` - List all decisions/*.md files
-  - `getChangelog()` - Read changelog.md
-  - `getPatterns()` / `getAntiPatterns()` - Read knowledge artifacts
-  - `getAgents()` - Read agent definitions
-  - `callTool(name, params)` - Generic MCP tool interface
-  - `getContextSummary()` - Aggregated dashboard data
-- File system fallback reads directly from `context/` directory
-- Full TypeScript types for ContextArtifact, ValidationResult, MCPError
-
-**Why:**
-- Complete the UI implementation (was missing critical piece)
-- Enable UI to display context without running MCP server
-- Maintain MCP-compatible interface for future HTTP transport
-- Support read-only by default (per Decision 006)
-
-**Technical Details:**
-- Uses `CONTEXT_MESH_PATH` env var or auto-discovers `context/` directory
-- Safe file reading with error handling
-- Async/await throughout for performance
-- Singleton export for convenience
-
-**Related:**
-- [Feature: Hub UI](../intent/feature-hub-ui.md)
-- [Decision: UI Read-Only by Default](../decisions/006-ui-readonly-by-default.md)
 - [Decision: Tech Stack](../decisions/001-tech-stack.md)
 
 ---
@@ -224,31 +271,6 @@ This changelog records what changed in the Context Mesh Hub project, why it chan
 
 ---
 
-## 2026-01-27 - Feature: Hub UI Implementation
-
-**What Changed:**
-- Implemented Hub UI as Next.js v16 application
-- Created MCP client with file system fallback (read-only)
-- Implemented context visualization pages (intents, decisions, evolution)
-- Implemented lifecycle awareness (Intent/Build/Learn indicators)
-- Implemented validation feedback display
-- Implemented guidance panel for contextual help
-- Created navigation and layout structure
-
-**Why:**
-- Provides visual dashboard for Context Mesh context
-- Enables situational awareness for developers and teams
-- Makes context observable and understandable
-
-**Related:**
-- [Feature: Hub UI](../intent/feature-hub-ui.md)
-- [Feature: Hub Core](../intent/feature-hub-core.md)
-- [Feature: Hub CLI](../intent/feature-hub-cli.md)
-- [Decision: UI Read-Only by Default](../decisions/006-ui-readonly-by-default.md)
-- [Decision: Tech Stack](../decisions/001-tech-stack.md)
-
----
-
 ## 2026-01-27 - Feature: Hub Learn Sync Implementation
 
 **What Changed:**
@@ -289,7 +311,7 @@ This changelog records what changed in the Context Mesh Hub project, why it chan
 - Converted intent/build/learn tools to be prompt-driven: `intent_new_project`, `intent_existing_project`, `intent_add_feature`, `intent_update_feature`, `intent_fix_bug`, `intent_create_agent`, `learn_sync`
 - Implemented manifest reading/writing for `context/hub-manifest.json`
 - Implemented provenance tracking (pack/version/template/hash/source)
-- Updated feature intents to reference Decision 010 (hub-core, hub-build-protocol, hub-cli, hub-ui, hub-learn-sync)
+- Updated feature intents to reference Decision 010 (hub-core, hub-build-protocol, hub-cli, hub-learn-sync)
 - Added missing acceptance criteria to feature-hub-core.md for prompt-driven tools
 
 **Why:**
@@ -305,5 +327,4 @@ This changelog records what changed in the Context Mesh Hub project, why it chan
 - [Feature: Hub Core](../intent/feature-hub-core.md)
 - [Feature: Hub Build Protocol](../intent/feature-hub-build-protocol.md)
 - [Feature: Hub CLI](../intent/feature-hub-cli.md)
-- [Feature: Hub UI](../intent/feature-hub-ui.md)
 - [Feature: Hub Learn Sync](../intent/feature-hub-learn-sync.md)

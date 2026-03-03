@@ -115,7 +115,6 @@ All context artifacts live under the `context/` directory and are versioned usin
 - [Project Intent](../intent/project-intent.md)
 - [Feature: Hub Core](../intent/feature-hub-core.md)
 - [Feature: Hub CLI](../intent/feature-hub-cli.md)
-- [Feature: Hub UI](../intent/feature-hub-ui.md)
 
 ## Status
 

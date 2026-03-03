@@ -24,6 +24,7 @@ class PromptResolver:
         "new-project.md",
         "existing-project.md",
         "add-feature.md",
+        "add-decision.md",
         "update-feature.md",
         "fix-bug.md",
         "create-agent.md",

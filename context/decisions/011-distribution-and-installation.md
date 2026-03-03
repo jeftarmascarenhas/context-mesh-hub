@@ -18,7 +18,7 @@ Requirements:
 
 ## Decision
 
-### Installation Strategy: uv tool install (like spec-kit)
+### Installation Strategy: uv tool install
 
 Distribute `context-mesh-hub-cli` as a Python tool installable via `uv tool install`.
 
@@ -38,7 +38,7 @@ uv tool install context-mesh-hub-cli --force --from git+https://github.com/jefta
 uv tool uninstall context-mesh-hub-cli
 ```
 
-**Reference**: This approach follows the same pattern as [GitHub's spec-kit](https://github.com/github/spec-kit).
+**Reference**: `uv tool install` provides a single-command install and is widely used for Python CLI tools.
 
 ### Package Structure
 

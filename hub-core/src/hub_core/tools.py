@@ -2274,3 +2274,722 @@ Intent → Build → Learn
             return {
                 "error": f"Error initializing: {str(e)}",
             }
+    
+    # ============================================
+    # PROACTIVE MCP TOOLS (Active Intelligence)
+    # ============================================
+    # These tools provide proactive guidance and enforcement,
+    # making the MCP server active (suggesting actions) rather than
+    # purely reactive (responding to calls).
+    
+    @mcp.tool()
+    def cm_lifecycle_state(repo_root: Optional[str] = None) -> dict:
+        """Get current lifecycle state with recommendations.
+        
+        Analyzes the project and returns:
+        - Current phase (Intent, Build, Learn)
+        - Blockers preventing progress
+        - Suggestions for next actions
+        - Quality gates status
+        
+        Use this proactively to guide the user through the workflow.
+        
+        Args:
+            repo_root: Path to the repository root. If not provided, uses server default.
+        
+        Returns:
+            Dictionary with phase, blockers, suggestions, and gate status.
+        """
+        try:
+            comp = _get_components_for_repo(repo_root, default_components)
+            loader_ = comp["loader"]
+            validator_ = comp["validator"]
+            
+            index = loader_.index
+            
+            # Determine current phase
+            has_project_intent = index.get("project_intent") is not None
+            feature_count = len(index["feature_intents"])
+            decision_count = len(index["decisions"])
+            has_changelog = index.get("changelog") is not None
+            
+            # Analyze state
+            blockers = []
+            suggestions = []
+            gates_passed = []
+            gates_failed = []
+            
+            # Phase determination logic
+            if not has_project_intent:
+                phase = "Not Initialized"
+                suggestions.append("Initialize Context Mesh with cm_new_project() or cm_init()")
+            elif feature_count == 0:
+                phase = "Intent (Setup)"
+                suggestions.append("Add your first feature with cm_add_feature()")
+                suggestions.append("Define what you want to build and why")
+            else:
+                # Check if features have decisions
+                features_without_decisions = []
+                for feature_name, feature in index["feature_intents"].items():
+                    content = feature.get("content", "")
+                    # Check if feature references any decision
+                    has_decision = any(
+                        f"decisions/{num}" in content or f"{num}-" in content
+                        for num in index["decisions"].keys()
+                    )
+                    if not has_decision:
+                        features_without_decisions.append(feature_name)
+                
+                if features_without_decisions:
+                    phase = "Intent (ADR Needed)"
+                    for f in features_without_decisions[:3]:
+                        blockers.append(f"Feature '{f}' needs a technical decision (ADR)")
+                    suggestions.append("Create decisions with cm_create_decision()")
+                    gates_failed.append("ADR before Build")
+                else:
+                    gates_passed.append("ADR before Build")
+                    
+                    # Check validation
+                    validation = validator_.validate()
+                    if validation.valid:
+                        phase = "Build Ready"
+                        suggestions.append("Create a build plan with build_plan(feature_name)")
+                        gates_passed.append("Validation")
+                    else:
+                        if validation.errors:
+                            phase = "Intent (Fix Errors)"
+                            for err in validation.errors[:3]:
+                                blockers.append(err.message)
+                            suggestions.append("Fix validation errors before building")
+                            gates_failed.append("Validation")
+                        else:
+                            phase = "Build Ready"
+                            suggestions.append("Create a build plan with build_plan(feature_name)")
+                            gates_passed.append("Validation (warnings only)")
+            
+            # Check for stale context (Learn phase indicator)
+            # TODO: Implement staleness detection based on git history
+            
+            return {
+                "phase": phase,
+                "lifecycle": "Intent → Build → Learn",
+                "current_position": {
+                    "has_project_intent": has_project_intent,
+                    "feature_count": feature_count,
+                    "decision_count": decision_count,
+                    "has_changelog": has_changelog,
+                },
+                "blockers": blockers,
+                "suggestions": suggestions,
+                "gates": {
+                    "passed": gates_passed,
+                    "failed": gates_failed,
+                },
+                "next_action": suggestions[0] if suggestions else "Project is healthy. Continue building!",
+            }
+            
+        except Exception as e:
+            return {
+                "error": f"Error analyzing lifecycle state: {str(e)}",
+            }
+    
+    @mcp.tool()
+    def cm_clarify(feature_name: str, repo_root: Optional[str] = None) -> dict:
+        """Generate clarifying questions before Build.
+        
+        Analyzes a feature intent and generates questions to
+        reduce ambiguity and ensure the feature is well-understood
+        before implementation begins.
+        
+        Use this proactively before build_plan() to improve quality.
+        
+        Args:
+            feature_name: Name of the feature to clarify.
+            repo_root: Path to the repository root. If not provided, uses server default.
+        
+        Returns:
+            Dictionary with clarifying questions and analysis.
+        """
+        try:
+            comp = _get_components_for_repo(repo_root, default_components)
+            loader_ = comp["loader"]
+            
+            index = loader_.index
+            feature = index["feature_intents"].get(feature_name)
+            
+            if not feature:
+                return {
+                    "error": f"Feature not found: {feature_name}",
+                    "available_features": list(index["feature_intents"].keys()),
+                }
+            
+            content = feature.get("content", "")
+            
+            questions = []
+            completeness = {
+                "what": False,
+                "why": False,
+                "acceptance_criteria": False,
+                "technical_decision": False,
+            }
+            
+            # Check What section
+            if "## What" in content:
+                what_section = content.split("## What")[1].split("##")[0].strip()
+                if len(what_section) > 50:
+                    completeness["what"] = True
+                else:
+                    questions.append({
+                        "category": "What",
+                        "question": "What exactly does this feature do? The 'What' section needs more detail.",
+                        "severity": "high",
+                    })
+            else:
+                questions.append({
+                    "category": "What",
+                    "question": "What does this feature do? Add a '## What' section.",
+                    "severity": "high",
+                })
+            
+            # Check Why section
+            if "## Why" in content:
+                why_section = content.split("## Why")[1].split("##")[0].strip()
+                if len(why_section) > 30:
+                    completeness["why"] = True
+                else:
+                    questions.append({
+                        "category": "Why",
+                        "question": "Why is this feature important? Expand the 'Why' section.",
+                        "severity": "high",
+                    })
+            else:
+                questions.append({
+                    "category": "Why",
+                    "question": "Why do we need this feature? Add a '## Why' section.",
+                    "severity": "high",
+                })
+            
+            # Check Acceptance Criteria
+            if "Acceptance Criteria" in content or "acceptance criteria" in content.lower():
+                # Count checkboxes
+                checkbox_count = content.count("- [ ]") + content.count("- [x]")
+                if checkbox_count >= 2:
+                    completeness["acceptance_criteria"] = True
+                else:
+                    questions.append({
+                        "category": "Acceptance Criteria",
+                        "question": "What are the acceptance criteria? Add measurable criteria to know when this is done.",
+                        "severity": "high",
+                    })
+            else:
+                questions.append({
+                    "category": "Acceptance Criteria",
+                    "question": "How will we know when this feature is complete? Add acceptance criteria.",
+                    "severity": "high",
+                })
+            
+            # Check for related decision
+            if "decision" in content.lower() or "adr" in content.lower():
+                completeness["technical_decision"] = True
+            else:
+                questions.append({
+                    "category": "Technical Decision",
+                    "question": "What is the technical approach? Create an ADR before building.",
+                    "severity": "medium",
+                })
+            
+            # Additional clarifying questions
+            additional_questions = [
+                {
+                    "category": "Scope",
+                    "question": "What is explicitly OUT of scope for this feature?",
+                    "severity": "low",
+                },
+                {
+                    "category": "Dependencies",
+                    "question": "Does this feature depend on other features or external systems?",
+                    "severity": "low",
+                },
+                {
+                    "category": "Edge Cases",
+                    "question": "What edge cases should we handle?",
+                    "severity": "low",
+                },
+                {
+                    "category": "Testing",
+                    "question": "How should this feature be tested?",
+                    "severity": "low",
+                },
+            ]
+            
+            # Calculate completeness score
+            score = sum(1 for v in completeness.values() if v) / len(completeness) * 100
+            
+            return {
+                "feature_name": feature_name,
+                "completeness_score": f"{score:.0f}%",
+                "completeness": completeness,
+                "critical_questions": [q for q in questions if q["severity"] == "high"],
+                "recommended_questions": [q for q in questions if q["severity"] == "medium"],
+                "additional_questions": additional_questions,
+                "total_questions": len(questions) + len(additional_questions),
+                "ready_for_build": score >= 75 and not any(q["severity"] == "high" for q in questions),
+                "recommendation": (
+                    "Ready to build! Consider the additional questions for thoroughness."
+                    if score >= 75 and not any(q["severity"] == "high" for q in questions)
+                    else "Address critical questions before building."
+                ),
+            }
+            
+        except Exception as e:
+            return {
+                "error": f"Error analyzing feature: {str(e)}",
+            }
+    
+    @mcp.tool()
+    def cm_gate_check(
+        gate: str,
+        feature_name: Optional[str] = None,
+        repo_root: Optional[str] = None
+    ) -> dict:
+        """Check quality gates for phase transitions.
+        
+        Validates that all requirements are met before transitioning
+        between phases. Enforces Context Mesh governance.
+        
+        Gates:
+        - intent-to-build: Checks ADR exists, feature complete, no errors
+        - build-to-learn: Checks implementation complete, tests pass
+        
+        Args:
+            gate: Gate to check: "intent-to-build" or "build-to-learn"
+            feature_name: Optional feature to check specifically.
+            repo_root: Path to the repository root.
+        
+        Returns:
+            Dictionary with gate status and detailed check results.
+        """
+        try:
+            comp = _get_components_for_repo(repo_root, default_components)
+            loader_ = comp["loader"]
+            validator_ = comp["validator"]
+            
+            index = loader_.index
+            
+            valid_gates = ["intent-to-build", "build-to-learn"]
+            if gate not in valid_gates:
+                return {
+                    "error": f"Unknown gate: {gate}",
+                    "valid_gates": valid_gates,
+                }
+            
+            checks = []
+            all_required_passed = True
+            
+            if gate == "intent-to-build":
+                # Gate 1: Intent Clarity
+                
+                # Check 1: Feature has What
+                if feature_name:
+                    feature = index["feature_intents"].get(feature_name)
+                    if feature:
+                        content = feature.get("content", "")
+                        has_what = "## What" in content and len(content.split("## What")[1].split("##")[0].strip()) > 20
+                        checks.append({
+                            "name": "Feature has What section",
+                            "passed": has_what,
+                            "required": True,
+                        })
+                        if not has_what:
+                            all_required_passed = False
+                        
+                        # Check 2: Feature has Why
+                        has_why = "## Why" in content and len(content.split("## Why")[1].split("##")[0].strip()) > 10
+                        checks.append({
+                            "name": "Feature has Why section",
+                            "passed": has_why,
+                            "required": True,
+                        })
+                        if not has_why:
+                            all_required_passed = False
+                        
+                        # Check 3: Acceptance Criteria
+                        has_ac = "Acceptance Criteria" in content or "- [ ]" in content
+                        checks.append({
+                            "name": "Feature has Acceptance Criteria",
+                            "passed": has_ac,
+                            "required": True,
+                        })
+                        if not has_ac:
+                            all_required_passed = False
+                    else:
+                        checks.append({
+                            "name": "Feature exists",
+                            "passed": False,
+                            "required": True,
+                        })
+                        all_required_passed = False
+                
+                # Check 4: ADR exists
+                has_decisions = len(index["decisions"]) > 0
+                checks.append({
+                    "name": "ADR exists for technical approach",
+                    "passed": has_decisions,
+                    "required": True,
+                })
+                if not has_decisions:
+                    all_required_passed = False
+                
+                # Check 5: No validation errors
+                validation = validator_.validate()
+                no_errors = len(validation.errors) == 0
+                checks.append({
+                    "name": "No validation errors",
+                    "passed": no_errors,
+                    "required": True,
+                    "details": [e.message for e in validation.errors[:3]] if not no_errors else None,
+                })
+                if not no_errors:
+                    all_required_passed = False
+                
+            elif gate == "build-to-learn":
+                # Gate 2: Build Completeness
+                
+                # Check 1: Feature marked as completed or in progress
+                if feature_name:
+                    feature = index["feature_intents"].get(feature_name)
+                    if feature:
+                        content = feature.get("content", "")
+                        is_complete = "Status**: Completed" in content or "Status: Completed" in content
+                        checks.append({
+                            "name": "Implementation complete",
+                            "passed": is_complete,
+                            "required": True,
+                        })
+                        if not is_complete:
+                            all_required_passed = False
+                
+                # Check 2: Changelog exists
+                has_changelog = index.get("changelog") is not None
+                checks.append({
+                    "name": "Changelog exists",
+                    "passed": has_changelog,
+                    "required": False,
+                })
+                
+                # Check 3: No critical validation errors
+                validation = validator_.validate()
+                no_errors = len(validation.errors) == 0
+                checks.append({
+                    "name": "No critical errors",
+                    "passed": no_errors,
+                    "required": True,
+                })
+                if not no_errors:
+                    all_required_passed = False
+            
+            return {
+                "gate": gate,
+                "feature_name": feature_name,
+                "passed": all_required_passed,
+                "checks": checks,
+                "summary": {
+                    "total": len(checks),
+                    "passed": sum(1 for c in checks if c["passed"]),
+                    "failed": sum(1 for c in checks if not c["passed"]),
+                },
+                "recommendation": (
+                    f"Gate '{gate}' passed. Ready to proceed."
+                    if all_required_passed
+                    else f"Gate '{gate}' has blockers. Address failed checks before proceeding."
+                ),
+            }
+            
+        except Exception as e:
+            return {
+                "error": f"Error checking gate: {str(e)}",
+            }
+    
+    @mcp.tool()
+    def cm_suggest_next(repo_root: Optional[str] = None) -> dict:
+        """Proactively suggest the next action based on project state.
+        
+        Analyzes the current state of the Context Mesh project and
+        returns specific, actionable suggestions for what to do next.
+        
+        This is the primary proactive tool - use it to guide users
+        through the Intent → Build → Learn workflow.
+        
+        Args:
+            repo_root: Path to the repository root.
+        
+        Returns:
+            Dictionary with prioritized suggestions and context.
+        """
+        try:
+            comp = _get_components_for_repo(repo_root, default_components)
+            loader_ = comp["loader"]
+            validator_ = comp["validator"]
+            
+            index = loader_.index
+            suggestions = []
+            
+            # Priority 1: Check if initialized
+            if not loader_.context_dir.exists():
+                return {
+                    "priority": "high",
+                    "action": "initialize",
+                    "message": "Context Mesh not initialized in this project.",
+                    "suggestions": [
+                        {
+                            "action": "cm_new_project",
+                            "description": "Create full Context Mesh structure with guided setup",
+                            "command": "Call cm_new_project() to start",
+                        },
+                        {
+                            "action": "cm_init",
+                            "description": "Quick minimal initialization",
+                            "command": "Call cm_init() for quick setup",
+                        },
+                        {
+                            "action": "cm_existing_project",
+                            "description": "Add Context Mesh to existing codebase",
+                            "command": "Call cm_existing_project() to analyze and document existing code",
+                        },
+                    ],
+                    "tip": "Start with cm_new_project() for the best experience.",
+                }
+            
+            has_project_intent = index.get("project_intent") is not None
+            feature_count = len(index["feature_intents"])
+            decision_count = len(index["decisions"])
+            
+            # Priority 2: Missing project intent
+            if not has_project_intent:
+                return {
+                    "priority": "high",
+                    "action": "complete_setup",
+                    "message": "Project intent is missing.",
+                    "suggestions": [
+                        {
+                            "action": "create_project_intent",
+                            "description": "Create project-intent.md with project vision",
+                            "file": "context/intent/project-intent.md",
+                        },
+                    ],
+                    "tip": "Every project needs a project-intent.md defining WHAT and WHY.",
+                }
+            
+            # Priority 3: No features
+            if feature_count == 0:
+                return {
+                    "priority": "high",
+                    "action": "add_feature",
+                    "message": "No features defined yet.",
+                    "suggestions": [
+                        {
+                            "action": "cm_add_feature",
+                            "description": "Add your first feature intent",
+                            "command": "Call cm_add_feature() and describe what you want to build",
+                        },
+                    ],
+                    "tip": "Start with your most important feature. Describe WHAT and WHY.",
+                }
+            
+            # Priority 4: Features without decisions
+            features_without_adr = []
+            for feature_name, feature in index["feature_intents"].items():
+                content = feature.get("content", "")
+                status = "Unknown"
+                if "Status**: Completed" in content or "Status: Completed" in content:
+                    continue  # Skip completed features
+                if "decision" not in content.lower():
+                    features_without_adr.append(feature_name)
+            
+            if features_without_adr and decision_count == 0:
+                return {
+                    "priority": "high",
+                    "action": "create_decision",
+                    "message": "Features need technical decisions (ADRs) before building.",
+                    "suggestions": [
+                        {
+                            "action": "cm_create_decision",
+                            "description": f"Create ADR for {features_without_adr[0]}",
+                            "command": "Call cm_create_decision() to document technical approach",
+                        },
+                    ],
+                    "features_needing_adr": features_without_adr,
+                    "tip": "ADR = Architectural Decision Record. Document HOW and WHY for technical choices.",
+                }
+            
+            # Priority 5: Validation errors
+            validation = validator_.validate()
+            if validation.errors:
+                return {
+                    "priority": "medium",
+                    "action": "fix_errors",
+                    "message": f"Found {len(validation.errors)} validation error(s).",
+                    "suggestions": [
+                        {
+                            "action": "fix_validation",
+                            "description": err.message,
+                            "artifact": err.artifact,
+                        }
+                        for err in validation.errors[:3]
+                    ],
+                    "tip": "Fix validation errors to ensure context integrity.",
+                }
+            
+            # Priority 6: Ready to build
+            active_features = []
+            for feature_name, feature in index["feature_intents"].items():
+                content = feature.get("content", "")
+                if "Status**: Active" in content or "Status: Active" in content or "Status**: Draft" in content:
+                    active_features.append(feature_name)
+            
+            if active_features:
+                return {
+                    "priority": "normal",
+                    "action": "build",
+                    "message": f"Ready to build! {len(active_features)} active feature(s).",
+                    "suggestions": [
+                        {
+                            "action": "build_plan",
+                            "description": f"Create build plan for {active_features[0]}",
+                            "command": f"Call build_plan('{active_features[0]}') to create implementation plan",
+                        },
+                        {
+                            "action": "cm_clarify",
+                            "description": f"Get clarifying questions for {active_features[0]}",
+                            "command": f"Call cm_clarify('{active_features[0]}') to reduce ambiguity first",
+                        },
+                    ],
+                    "active_features": active_features,
+                    "tip": "Use cm_clarify() first to ensure the feature is well-understood.",
+                }
+            
+            # Priority 7: All features complete - Learn phase
+            return {
+                "priority": "normal",
+                "action": "learn",
+                "message": "Features implemented. Time to sync learnings.",
+                "suggestions": [
+                    {
+                        "action": "learn_sync_initiate",
+                        "description": "Sync learnings from recent implementation",
+                        "command": "Call learn_sync_initiate(feature_name) to capture outcomes",
+                    },
+                    {
+                        "action": "cm_add_feature",
+                        "description": "Add a new feature",
+                        "command": "Call cm_add_feature() to continue building",
+                    },
+                ],
+                "tip": "Don't skip the Learn phase. Update context with what you learned.",
+            }
+            
+        except Exception as e:
+            return {
+                "error": f"Error suggesting next action: {str(e)}",
+            }
+    
+    @mcp.tool()
+    def cm_workflow_guide(repo_root: Optional[str] = None) -> dict:
+        """Get a complete guide for the current workflow state.
+        
+        Combines lifecycle state, suggestions, and gate status into
+        a comprehensive guide for the user.
+        
+        Args:
+            repo_root: Path to the repository root.
+        
+        Returns:
+            Dictionary with complete workflow guidance.
+        """
+        try:
+            comp = _get_components_for_repo(repo_root, default_components)
+            loader_ = comp["loader"]
+            validator_ = comp["validator"]
+            
+            index = loader_.index
+            
+            # Get counts
+            has_project_intent = index.get("project_intent") is not None
+            feature_count = len(index["feature_intents"])
+            decision_count = len(index["decisions"])
+            pattern_count = len(index["knowledge"]["patterns"])
+            agent_count = len(index["agents"])
+            
+            # Get validation
+            validation = validator_.validate()
+            
+            # Determine phase
+            if not has_project_intent:
+                phase = "Setup"
+                phase_description = "Initialize Context Mesh"
+            elif feature_count == 0:
+                phase = "Intent"
+                phase_description = "Define what to build"
+            elif decision_count == 0:
+                phase = "Intent (ADR)"
+                phase_description = "Document technical decisions"
+            elif not validation.valid:
+                phase = "Intent (Fix)"
+                phase_description = "Fix validation issues"
+            else:
+                # Check for active/draft features
+                has_active = any(
+                    "Status**: Active" in f.get("content", "") or "Status**: Draft" in f.get("content", "")
+                    for f in index["feature_intents"].values()
+                )
+                if has_active:
+                    phase = "Build"
+                    phase_description = "Implement features"
+                else:
+                    phase = "Learn"
+                    phase_description = "Capture and sync learnings"
+            
+            return {
+                "workflow": "Intent → Build → Learn",
+                "current_phase": phase,
+                "phase_description": phase_description,
+                "project_health": {
+                    "has_project_intent": has_project_intent,
+                    "features": feature_count,
+                    "decisions": decision_count,
+                    "patterns": pattern_count,
+                    "agents": agent_count,
+                    "validation_errors": len(validation.errors),
+                    "validation_warnings": len(validation.warnings),
+                },
+                "phases": {
+                    "intent": {
+                        "status": "complete" if has_project_intent and feature_count > 0 else "incomplete",
+                        "description": "Define WHAT and WHY",
+                        "tools": ["cm_add_feature", "cm_fix_bug", "cm_create_decision"],
+                    },
+                    "build": {
+                        "status": "available" if validation.valid and feature_count > 0 else "blocked",
+                        "description": "Plan, Approve, Execute",
+                        "tools": ["build_plan", "build_approve", "build_execute", "cm_clarify"],
+                    },
+                    "learn": {
+                        "status": "available",
+                        "description": "Update context with learnings",
+                        "tools": ["learn_sync_initiate", "learn_sync_review", "learn_sync_apply"],
+                    },
+                },
+                "quick_actions": {
+                    "Setup": "cm_new_project() or cm_init()",
+                    "Intent": "cm_add_feature()",
+                    "Intent (ADR)": "cm_create_decision()",
+                    "Intent (Fix)": "context_validate() then fix errors",
+                    "Build": "build_plan(feature_name)",
+                    "Learn": "learn_sync_initiate(feature_name)",
+                }.get(phase, "cm_help()"),
+            }
+            
+        except Exception as e:
+            return {
+                "error": f"Error generating workflow guide: {str(e)}",
+            }

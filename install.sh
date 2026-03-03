@@ -142,7 +142,7 @@ echo "│    source $SCRIPT_DIR/.venv/bin/activate"
 echo "│                                                              │"
 fi
 echo "│  Next steps:                                                 │"
-echo "│    1. cm init --ai cursor    # Choose your AI agent         │"
+echo "│    1. cm init                # Interactive setup menu        │"
 echo "│    2. cm config              # Get MCP configuration        │"
 echo "│    3. cm doctor              # Verify setup                 │"
 echo "│                                                              │"

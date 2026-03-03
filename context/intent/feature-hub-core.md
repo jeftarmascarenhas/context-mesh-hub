@@ -120,11 +120,13 @@ Hub Core is the foundational runtime that turns Context Mesh into an **active, e
 - [Decision: MCP Tool Contracts](../decisions/002-mcp-tool-contracts.md)
 - [Decision: Context Bundling Strategy](../decisions/003-context-bundling-strategy.md)
 - [Decision: Prompt Pack Resolution and Update Model](../decisions/010-prompt-pack-resolution-and-update-model.md)
+- [Decision: Context Mesh Evolution Strategy](../decisions/012-context-mesh-evolution-strategy.md)
 
 ## Status
 
 - **Created**: 2026-01-26 (Phase: Intent)
 - **Completed**: 2026-01-27 (Phase: Build)
+- **Updated**: 2026-01-31 (Phase: Build) - Added proactive MCP tools (lifecycle, clarify, gates, suggest)
 - **Status**: Completed
 
 ## Implementation Notes

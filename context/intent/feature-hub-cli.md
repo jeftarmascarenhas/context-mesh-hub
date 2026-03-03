@@ -109,12 +109,7 @@ The CLI does **not** implement context logic itself. It delegates domain behavio
      - configured ports
    - Provide health checks (ping tool)
 
-4. **UI Orchestration**
-   - Start the Next.js UI with:
-     - repository context passed via env/config
-   - Provide URL output and readiness checks
-
-5. **Diagnostics**
+4. **Diagnostics**
    - Implement `doctor` checks:
      - Node/Python versions
      - required binaries present
@@ -134,15 +129,16 @@ The CLI does **not** implement context logic itself. It delegates domain behavio
 - [Project Intent](./project-intent.md)
 - [Feature: Hub Core](./feature-hub-core.md)
 - [Feature: Hub Build Protocol](./feature-hub-build-protocol.md)
-- [Feature: Hub UI](./feature-hub-ui.md)
 - [Decision: Tech Stack](../decisions/001-tech-stack.md)
 - [Decision: Agent Scope and Authority](../decisions/007-agent-scope-and-authority.md)
 - [Decision: Prompt Pack Resolution and Update Model](../decisions/010-prompt-pack-resolution-and-update-model.md)
+- [Decision: Context Mesh Evolution Strategy](../decisions/012-context-mesh-evolution-strategy.md)
 
 ## Status
 
 - **Created**: 2026-01-26 (Phase: Intent)
 - **Updated**: 2026-01-28 (Phase: Build) - Re-architected to Python
+- **Updated**: 2026-01-31 (Phase: Build) - Added slash commands (/intent, /build, /learn)
 - **Status**: Completed
 
 ## Implementation Notes
@@ -158,13 +154,13 @@ Hub CLI has been **re-architected from Node.js to Python** for stack unification
 ### Command Surface
 
 ```
+cm                     # Interactive menu (run after install)
 cm init --ai <agent>   # Initialize and choose AI backend
 cm config              # Show MCP configuration for editors
+cm setup-commands      # Install slash commands for agent chat (Cursor; others later)
 cm agents              # List supported AI agents and status
 cm doctor              # Run diagnostics
-cm ui                  # Start UI dashboard
-cm chat "message"      # Chat via CLI (requires chat-capable agent)
-cm                     # Interactive menu
+cm projects list|add|remove   # Registered projects
 ```
 
 ### AI Agent Support
@@ -173,10 +169,10 @@ Supports 4 primary AI backends:
 
 | Agent | Type | Use Case |
 |-------|------|----------|
-| `cursor` | IDE | MCP in Cursor editor |
-| `copilot` | IDE | MCP in VS Code + GitHub Copilot |
-| `gemini` | CLI | Terminal chat via Gemini CLI |
-| `claude` | CLI | Terminal chat via Claude Code |
+| `cursor` | IDE | MCP + slash commands in Cursor (cm setup-commands) |
+| `copilot` | IDE | MCP in VS Code + GitHub Copilot (slash commands later) |
+| `gemini` | CLI | MCP in Gemini CLI (slash commands later) |
+| `claude` | CLI | MCP in Claude CLI (slash commands later) |
 
 Configuration stored in `~/.context-mesh-hub/config.json`.
 

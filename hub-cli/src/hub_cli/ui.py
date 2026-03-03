@@ -1,5 +1,7 @@
 """UI components for the CLI with Rich."""
 
+from typing import Optional
+
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
@@ -93,39 +95,38 @@ def print_info(message: str):
     console.print(f"[bold blue]ℹ[/bold blue] {message}")
 
 
-def print_mcp_config(config: dict):
-    """Print MCP configuration in a styled box."""
+def print_mcp_config(config: dict, raw: bool = False, editor: Optional[str] = None):
+    """Print MCP configuration. Use raw=True for copy-paste friendly JSON only (no borders).
+
+    When editor is set (cursor, copilot, claude, gemini), shows only that editor's paste location.
+    When raw=False, prints a short instruction then plain JSON (no Panel around JSON)
+    so selecting and copying gives clean JSON without box-drawing characters (│, ─).
+    """
     import json
-    
+    from hub_cli.config import MCP_EDITORS
+
     config_json = json.dumps(config, indent=2)
-    
+
+    if raw:
+        console.print(config_json)
+        return
+
+    editor_name = MCP_EDITORS.get(editor or "", {}).get("name", "your editor")
     console.print()
-    console.print(Panel(
-        f"[bold white]{config_json}[/bold white]",
-        title="[bold cyan]📋 MCP Configuration[/bold cyan]",
-        subtitle="[dim]Copy to your AI editor settings[/dim]",
-        border_style=Style(color=BLUE),
-        box=ROUNDED,
-        padding=(1, 2),
-    ))
-    
-    # Supported editors
+    console.print("[bold cyan]MCP Configuration[/bold cyan]")
+    console.print(f"[dim]Copy the JSON below (from {{ to }}) and paste it in {editor_name}.[/dim]")
     console.print()
-    table = Table(show_header=False, box=None, padding=(0, 2))
-    table.add_column("Editor", style="bold")
-    table.add_column("Location", style="dim")
-    
-    table.add_row("Cursor", "Settings → Features → MCP Servers")
-    table.add_row("VS Code + Copilot", "Settings → GitHub Copilot → MCP")
-    table.add_row("Claude Desktop", "~/Library/Application Support/Claude/claude_desktop_config.json")
-    table.add_row("Any MCP editor", "Check editor documentation")
-    
-    console.print(Panel(
-        table,
-        title="[bold]Supported Editors[/bold]",
-        border_style=Style(color=GRAY),
-        box=ROUNDED,
-    ))
+    # Plain JSON only — no Panel/box so copy-paste gives clean JSON (no │ or other border chars)
+    console.print(config_json)
+    console.print()
+    if editor and editor in MCP_EDITORS:
+        paste = MCP_EDITORS[editor]["paste"]
+        console.print("[dim]Where to paste:[/dim]")
+        console.print(f"  [bold]{MCP_EDITORS[editor]['name']}[/bold]  {paste}")
+    else:
+        console.print("[dim]Where to paste:[/dim]")
+        for key, info in MCP_EDITORS.items():
+            console.print(f"  [bold]{info['name']}[/bold]  {info['paste']}")
 
 
 def print_status_table(checks: list[tuple[str, bool, str]]):

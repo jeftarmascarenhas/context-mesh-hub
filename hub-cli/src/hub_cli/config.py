@@ -164,6 +164,40 @@ def get_ai_agent() -> Optional[str]:
     return get_config().ai_agent
 
 
+# Editor-specific MCP config: top-level JSON key and where to paste
+# Cursor uses mcpServers; VS Code GitHub Copilot uses "servers"
+MCP_EDITORS = {
+    "cursor": {
+        "name": "Cursor",
+        "config_key": "mcpServers",
+        "paste": "Settings → Features → MCP Servers",
+    },
+    "copilot": {
+        "name": "GitHub Copilot (VS Code)",
+        "config_key": "servers",
+        "paste": "Settings → GitHub Copilot → MCP",
+    },
+    "claude": {
+        "name": "Claude Desktop",
+        "config_key": "mcpServers",
+        "paste": "~/Library/Application Support/Claude/claude_desktop_config.json",
+    },
+    "gemini": {
+        "name": "Gemini CLI",
+        "config_key": "mcpServers",
+        "paste": "Check Gemini CLI docs for MCP config location",
+    },
+}
+
+# Where to install slash commands per agent (relative to project root)
+# Cursor: .cursor/commands/*.md; Copilot: .github/prompts/*.md; Claude: .claude/commands/*.md; Gemini: .gemini/commands/*.toml
+AGENT_COMMAND_DIRS = {
+    "cursor": ".cursor/commands",
+    "copilot": ".github/prompts",
+    "claude": ".claude/commands",
+    "gemini": ".gemini/commands",
+}
+
 # Supported AI agents with their details
 AI_AGENTS = {
     "cursor": {

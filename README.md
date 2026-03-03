@@ -4,7 +4,7 @@
 </div>
 
 <p align="center">
-    <strong>An open source framework that standardizes Context Engineering processes for AI-assisted development.</strong>
+    <strong>One install. CLI + MCP server + UI. Govern AI-assisted development with context-first workflows.</strong>
 </p>
 
 <p align="center">
@@ -28,236 +28,183 @@
 
 ## 🤔 What is Context Mesh Hub?
 
-Context Mesh Hub is a **local-first, repo-first, MCP-first** system that turns AI-assisted development into a **governed, repeatable process**.
+Context Mesh Hub is **3 apps in 1**: a single product that gives you a **CLI**, an **MCP server**, and a **local UI**. Install once and use all three to standardize how your team creates, validates, and evolves **context artifacts** so any AI agent (Cursor, Copilot, Claude, Gemini) can work safely and consistently.
 
-It standardizes how teams create, validate, execute, and evolve **context artifacts** so any AI agent (Cursor, Copilot, Claude, etc.) can operate safely and consistently.
+**What you get:**
 
-**Key differences from other tools:**
+| Part | What it does |
+|------|----------------|
+| **CLI (`cm`)** | Interactive setup, MCP config, slash-command install, diagnostics, UI launcher |
+| **MCP server** | Runs inside your editor; exposes tools for context (intents, decisions, status, add feature, etc.) |
+| **UI** | Local dashboard to browse intents, decisions, and validation (`cm ui`) |
 
-| Feature | Context Mesh Hub | spec-kit |
-|---------|------------------|----------|
-| Focus | Context Strategy Management | Spec-Driven Development |
-| Interface | **MCP** (in editor) + CLI | CLI + Slash Commands |
-| Output | Context artifacts | Code from specs |
-| Workflow | Intent → Build → Learn | Specify → Plan → Implement |
+**Workflow:** Intent → Build → Learn. Context lives in your repo (`context/`); the MCP server is the single authority gate; agents are operators, not authorities.
 
 ## ⚡ Get Started
 
-### 1. Install Context Mesh Hub CLI
+### 1. Install Context Mesh Hub (one install, all three parts)
 
-Choose your preferred installation method:
+Use [uv](https://docs.astral.sh/uv/) to install the CLI. The MCP server is included; the UI runs via `cm ui` when needed.
 
-#### Option 1: Persistent Installation (Recommended)
-
-Install once and use everywhere with [uv](https://docs.astral.sh/uv/):
+#### Option A: Persistent install (recommended)
 
 ```bash
 uv tool install context-mesh-hub-cli --from git+https://github.com/jeftarmascarenhas/context-mesh-hub.git#subdirectory=hub-cli
 ```
 
-> **Note**: If `cm` is not found, add `~/.local/bin` to your PATH:
-> ```bash
-> export PATH="$HOME/.local/bin:$PATH"
-> ```
+> If `cm` is not found, add `~/.local/bin` to your PATH: `export PATH="$HOME/.local/bin:$PATH"`
 
-Then use the tool directly:
+Then run:
 
 ```bash
-# Initialize with your AI agent
-cm init --ai cursor
-
-# Get MCP configuration
-cm config
-
-# Check installed agents
-cm agents
-
-# Run diagnostics
-cm doctor
+cm init
 ```
 
-To upgrade:
+You’ll get an **interactive menu**: register project, get MCP config, install slash commands, start UI, run diagnostics, or list agents. (Running **`cm`** with no arguments does the same.)
 
-```bash
-uv tool install context-mesh-hub-cli --force --from git+https://github.com/jeftarmascarenhas/context-mesh-hub.git#subdirectory=hub-cli
-```
-
-To uninstall:
-
-```bash
-uv tool uninstall context-mesh-hub-cli
-```
-
-#### Option 2: One-time Usage
-
-Run directly without installing:
+#### Option B: One-time run (no install)
 
 ```bash
 uvx --from git+https://github.com/jeftarmascarenhas/context-mesh-hub.git#subdirectory=hub-cli cm --help
 ```
 
-#### Option 3: Development Installation
-
-Clone and install for development:
+#### Option C: From source (development)
 
 ```bash
 git clone https://github.com/jeftarmascarenhas/context-mesh-hub.git
 cd context-mesh-hub
 ./install.sh
-source .venv/bin/activate
+source .venv/bin/activate   # if using venv
 ```
 
-**Benefits of persistent installation:**
-
-- Tool stays installed and available in PATH
-- No need to clone repositories
-- Better tool management with `uv tool list`, `uv tool upgrade`, `uv tool uninstall`
-- Cleaner shell configuration
-
-### 2. Initialize with your AI agent
+**Upgrade (Option A):**
 
 ```bash
-cm init --ai cursor      # For Cursor IDE
-cm init --ai copilot     # For VS Code + GitHub Copilot
-cm init --ai gemini      # For Gemini CLI
-cm init --ai claude      # For Claude Code
+uv tool install context-mesh-hub-cli --force --from git+https://github.com/jeftarmascarenhas/context-mesh-hub.git#subdirectory=hub-cli
 ```
 
+**Uninstall (Option A):**
+
+```bash
+uv tool uninstall context-mesh-hub-cli
+```
+
+### 2. Set up your project
+
+Run:
+
+```bash
+cm init
+```
+
+Then choose with the arrow keys:
+
+- **Register project** – register current (or another) directory as a Context Mesh project
+- **Get MCP config** – get editor-specific JSON for Cursor, Copilot, Claude, or Gemini
+- **Install slash commands** – install `/cm-add-feature`, `/cm-build`, etc. into your agent's command folder
+- **Run diagnostics**, **List AI agents**, or **Exit**
+
 ### 3. Configure MCP in your editor
+
+Run:
 
 ```bash
 cm config
 ```
 
-Copy the JSON output and paste it in your editor's MCP settings:
+If you don’t pass `--editor`, you’ll be asked to pick your editor. Copy the JSON and add it to:
 
-- **Cursor**: Settings → Features → MCP Servers
-- **VS Code + Copilot**: Settings → GitHub Copilot → MCP
-- **Claude Desktop**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Cursor:** Settings → Features → MCP Servers  
+- **VS Code + Copilot:** Settings → GitHub Copilot → MCP  
+- **Claude Desktop:** `~/Library/Application Support/Claude/claude_desktop_config.json`
 
-### 4. Use Context Mesh in your AI editor
+### 4. Install slash commands (optional, for agent chat)
 
-Once MCP is configured, you can use Context Mesh tools directly in your editor's chat:
+So that your AI assistant can use commands like `/cm-add-feature` and `/cm-status`:
 
+```bash
+cm setup-commands
 ```
-@context-mesh-hub cm_status
-@context-mesh-hub cm_help
-@context-mesh-hub cm_add_feature
-```
+
+Pick your agent (Cursor, Copilot, Claude, Gemini). Commands are written to the right place (e.g. `.cursor/commands/` for Cursor).
+
+### 5. Use Context Mesh in your editor
+
+- **Via MCP:** In chat, use the Context Mesh Hub tools (e.g. `cm_status`, `cm_help`, `cm_add_feature`).
+- **Via slash commands:** Type `/` and choose a command (e.g. `/cm-add-feature`, `/cm-status`).
 
 ## 🤖 Supported AI Agents
 
 | Agent | Type | Support | Notes |
 |-------|------|---------|-------|
-| [Cursor](https://cursor.sh/) | IDE | ✅ | MCP in editor chat |
-| [GitHub Copilot](https://github.com/features/copilot) | IDE | ✅ | MCP in VS Code |
-| [Claude Desktop](https://claude.ai/download) | IDE | ✅ | MCP in desktop app |
-| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | CLI | ✅ | Terminal chat |
-| [Claude Code](https://www.anthropic.com/claude-code) | CLI | ✅ | Terminal chat |
+| [Cursor](https://cursor.sh/) | IDE | ✅ | MCP + slash commands in chat |
+| [GitHub Copilot](https://github.com/features/copilot) | IDE | ✅ | MCP in VS Code; slash commands in `.github/prompts/` |
+| [Claude Desktop](https://claude.ai/download) | IDE | ✅ | MCP + slash commands |
+| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | CLI | ✅ | MCP + slash commands (TOML) |
 
 ## 🔧 CLI Reference
 
-The `cm` command supports the following options:
-
-### Commands
-
 | Command | Description |
 |---------|-------------|
-| `init` | Initialize Context Mesh Hub with your preferred AI agent |
-| `config` | Show MCP configuration for AI editors |
-| `agents` | List supported AI agents and their status |
-| `doctor` | Run diagnostics and check environment |
-| `ui` | Start the UI dashboard |
-| `chat` | Chat with Context Mesh Hub (requires CLI agent) |
+| `cm` | Same as `cm init` (interactive setup menu) |
+| `cm init` | Interactive setup: register project, MCP config, slash commands, UI, diagnostics, agents |
+| `cm config` | Get MCP config (interactive editor choice, or `--editor cursor\|copilot\|claude\|gemini`) |
+| `cm config --raw` | Print only the JSON (use with `--editor` to skip prompt) |
+| `cm setup-commands` | Install slash commands (interactive, or `--agent cursor\|copilot\|claude\|gemini`) |
+| `cm doctor` | Run diagnostics and check environment |
+| `cm agents` | List supported agents and status |
+| `cm projects list` | List registered Context Mesh projects |
+| `cm projects add [path]` | Register a project (default: current directory) |
+| `cm projects remove [path]` | Unregister a project |
 
-### `cm init` Options
-
-| Option | Description |
-|--------|-------------|
-| `--ai` | AI agent to use: `cursor`, `copilot`, `gemini`, `claude` |
-
-### Examples
+**Examples:**
 
 ```bash
-# Initialize with Cursor
-cm init --ai cursor
-
-# Initialize with GitHub Copilot
-cm init --ai copilot
-
-# Show MCP configuration
-cm config
-
-# List agents and status
-cm agents
-
-# Run diagnostics
+cm init                     # Interactive setup (recommended)
+cm                          # Same as cm init
+cm config --editor cursor   # MCP JSON for Cursor
+cm setup-commands --agent cursor
 cm doctor
-
-# Start UI dashboard
 cm ui
 ```
 
-### MCP Tools Available
-
-After configuring MCP, these tools are available in your editor:
-
-| Tool | Description |
-|------|-------------|
-| `cm_help` | Show available workflows and examples |
-| `cm_status` | Get project status with validation |
-| `cm_list_features` | List all features with status |
-| `cm_list_decisions` | List all decisions (ADRs) |
-| `cm_add_feature` | Add a new feature intent |
-| `cm_fix_bug` | Create a bug fix intent |
-| `cm_create_decision` | Create a new decision (ADR) |
+**MCP tools (after configuring MCP):** `cm_help`, `cm_status`, `cm_list_features`, `cm_list_decisions`, `cm_add_feature`, `cm_fix_bug`, `cm_create_decision`, and more.
 
 ## 📚 Core Philosophy
 
-Context Mesh Hub follows the **Intent → Build → Learn** workflow:
+- **Context is primary** – Code is its manifestation.  
+- **Local-first** – No cloud required; no login.  
+- **Repo-first** – All artifacts in `context/`, versioned with Git.  
+- **MCP-first** – AI agents interact via the Model Context Protocol.  
+- **Agents are operators** – Human approval required; MCP is the authority gate.
 
-1. **Intent**: Define WHAT and WHY (feature intents + acceptance criteria)
-2. **Build**: Execute with governance (Plan → Approve → Execute)
-3. **Learn**: Formalize outcomes into reusable knowledge
-
-**Key principles:**
-
-- **Context is primary** - Code is its manifestation
-- **Local-first** - No cloud dependencies, no login required
-- **Repo-first** - All artifacts in `context/` directory, versioned with Git
-- **MCP-first** - AI agents interact via Model Context Protocol
-- **Agents are operators, not authorities** - Human approval required
+**Workflow:** Intent → Build → Learn (define what and why, execute with governance, formalize learnings).
 
 ## 🔧 Prerequisites
 
 - **Python 3.12+**
-- **uv** for package management ([install](https://docs.astral.sh/uv/))
+- **uv** for install ([install uv](https://docs.astral.sh/uv/))
 - **Git**
-- Supported AI editor (Cursor, VS Code + Copilot, Claude Desktop)
+- A supported AI editor (Cursor, VS Code + Copilot, Claude Desktop, or Gemini CLI)
 
 ## 📖 Learn More
 
-- **[Context Mesh Framework](https://github.com/jeftarmascarenhas/context-mesh)** - The underlying methodology
-- **[AGENTS.md Standard](https://agents.md/)** - AI agent instructions standard
-- **[Model Context Protocol](https://modelcontextprotocol.io/)** - MCP specification
+- **[Context Mesh Framework](https://github.com/jeftarmascarenhas/context-mesh)** – Methodology behind the Hub
+- **[AGENTS.md Standard](https://agents.md/)** – AI agent instructions standard
+- **[Model Context Protocol](https://modelcontextprotocol.io/)** – MCP specification
 
-## Repository Structure
+## Repository structure
 
 ```
-context/
-├── intent/
-│   ├── project-intent.md
-│   └── feature-*.md
-├── decisions/
-│   └── 001-*.md
-├── knowledge/
-│   ├── patterns/
-│   └── anti-patterns/
-├── agents/
-│   └── agent-*.md
-└── evolution/
-    └── changelog.md
+context-mesh-hub/
+├── README.md           # This file
+├── install.sh          # Dev install (CLI + MCP from source)
+├── hub-cli/            # CLI (cm) — install this for "one install"
+├── hub-core/           # MCP server (used by CLI and editors)
+└── context/            # In your project: intent, decisions, knowledge, agents, evolution
 ```
+
+**Component READMEs:** [hub-cli/README.md](hub-cli/README.md) | [hub-core/README.md](hub-core/README.md)
 
 ## 👥 Maintainers
 
@@ -265,8 +212,8 @@ context/
 
 ## 💬 Support
 
-For support, please open a [GitHub issue](https://github.com/jeftarmascarenhas/context-mesh-hub/issues/new).
+Open a [GitHub issue](https://github.com/jeftarmascarenhas/context-mesh-hub/issues/new) for support.
 
 ## 📄 License
 
-This project is licensed under the terms of the MIT open source license.
+MIT License.

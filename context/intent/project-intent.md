@@ -32,7 +32,6 @@ Context Mesh Hub provides the infrastructure, tools, and workflows required to c
   - Learn and evolution feedback loops
 - MCP server exposing Context Mesh capabilities as tools
 - Minimal CLI for bootstrap, runtime, and diagnostics
-- Local UI for visibility, guidance, and feedback
 
 ### Project Types Supported
 - **Greenfield projects** (new systems)

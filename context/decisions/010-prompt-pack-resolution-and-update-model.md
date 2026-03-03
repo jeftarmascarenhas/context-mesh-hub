@@ -212,8 +212,6 @@ Hub MUST fail the tool call with a clear error:
 
 `@context/intent/feature-hub-cli.md`
 
-`@context/intent/feature-hub-ui.md (optional UI controls for prompts)`
-
 `@context/intent/feature-hub-learn-sync.md`
 
 `@context/decisions/003-mcp-tooling-and-authority.md (if exists; link the authority model)`

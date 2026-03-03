@@ -292,3 +292,26 @@ print(json.dumps({{"success": True, "content": result}}))
             },
             "_note": "Set CONTEXT_MESH_HUB_CORE_PATH environment variable to your hub-core/src path"
         }
+
+    def get_mcp_config_for_editor(self, editor: str, use_uv: bool = True) -> dict:
+        """Get MCP configuration in the format required by the given editor.
+
+        Each editor uses a different top-level key (Cursor/Claude/Gemini: mcpServers;
+        VS Code GitHub Copilot: servers). The server entry (command + args) is the same.
+
+        Args:
+            editor: One of cursor, copilot, claude, gemini
+            use_uv: If True, use uv run when available.
+        """
+        from hub_cli.config import MCP_EDITORS
+
+        base = self.get_mcp_config(use_uv=use_uv)
+        # Strip internal keys
+        base = {k: v for k, v in base.items() if not k.startswith("_")}
+        # Get the server entry (command + args)
+        server_entry = base.get("mcpServers", base.get("servers", {})).get("context-mesh-hub", {})
+        if not server_entry:
+            return base
+
+        config_key = MCP_EDITORS.get(editor, {}).get("config_key", "mcpServers")
+        return {config_key: {"context-mesh-hub": server_entry}}

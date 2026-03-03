@@ -58,22 +58,32 @@ class LLMClient:
 
 Available tools:
 - cm_help: Show available workflows and examples
-- cm_status: Get project status with validation and guidance  
+- cm_status: Get project status with validation and guidance
+- cm_new_project: Start a new Context Mesh project (full setup). Use for "start context new project", "init context mesh", "new project".
+- cm_init: Quick minimal Context Mesh setup in current directory. Use for "quick init", "minimal setup".
 - cm_list_features: List all features with status
 - cm_list_decisions: List all decisions with status
 - cm_add_feature: Add a new feature intent (requires: name, what, why, acceptance_criteria)
 - cm_fix_bug: Document a bug (requires: title, description, impact)
 - cm_create_decision: Create a technical decision (requires: number, title, context, decision, rationale)
+- hub_prompts_status: Show current prompt pack (template) version. Use for "what version?", "check context version", "verify version".
+- hub_prompts_install: Install a prompt pack version (requires: pack_name, version). Use after user asks to "update to latest" after checking status.
 
 When the user gives a command, respond with a JSON object containing:
 - tool_name: The MCP tool to call
-- arguments: The arguments to pass to the tool
+- arguments: The arguments to pass to the tool (use {} when no args needed)
 
 If you need more information from the user, respond with:
 - tool_name: "ask_user"
 - arguments: {"questions": ["question1", "question2"]}
 
 Examples:
+
+User: "start context new project" or "new project" or "init context mesh"
+Response: {"tool_name": "cm_new_project", "arguments": {}}
+
+User: "quick init" or "minimal setup"
+Response: {"tool_name": "cm_init", "arguments": {}}
 
 User: "add a feature for user authentication"
 Response: {"tool_name": "cm_add_feature", "arguments": {"name": "user-auth", "what": "User authentication system", "why": "Allow users to securely access the application", "acceptance_criteria": ["Users can register", "Users can login", "Users can logout"]}}
@@ -83,6 +93,9 @@ Response: {"tool_name": "cm_list_features", "arguments": {}}
 
 User: "show me the project status"
 Response: {"tool_name": "cm_status", "arguments": {}}
+
+User: "verify if context is using the last version" or "check context version" or "what prompt pack version?"
+Response: {"tool_name": "hub_prompts_status", "arguments": {}}
 
 User: "add a feature"
 Response: {"tool_name": "ask_user", "arguments": {"questions": ["What is the feature name?", "What does it do?", "Why do we need it?"]}}

@@ -22,6 +22,8 @@ This project uses [Context Mesh](https://github.com/jeftarmascarenhas/context-me
 All execution requests flow through MCP validation.
 Direct agent execution without MCP context bundling is invalid.
 
+When the user asks to **implement**, **execute**, or **write** something, the agent MUST use Context Mesh MCP (build, verify, gate check) when the project has Context Mesh configured and MCP is available — see [When the user asks to implement, execute, or write something](#when-the-user-asks-to-implement-execute-or-write-something).
+
 Context Mesh Hub is a **local-first, repo-first, MCP-first** system that:
 - visualizes and validates context artifacts (`context/`)
 - provides governance for AI-assisted work (Plan → Approve → Execute inside Build)
@@ -217,6 +219,56 @@ After completing any feature:
 ```
 
 **Never leave context stale. Future AI sessions depend on accurate context.**
+
+## 🔌 MCP and Living Context
+
+### When the user asks to implement, execute, or write something
+
+In **any project that has Context Mesh configured** (e.g. has a `context/` directory and this AGENTS.md or project intent references Context Mesh, or the Context Mesh Hub MCP server is connected to the agent):
+
+- **Treat implement/execute/write requests as governed by Context Mesh.** Do not go straight to writing code without involving context and, when available, MCP.
+- **When Context Mesh Hub MCP is available:**
+  1. **Before** implementing: use MCP to check state and gates — e.g. `cm_lifecycle_state`, `cm_gate_check("intent-to-build", feature_name)`, `context_validate`, `cm_status`. If the user did not name a feature, use `cm_suggest_next` or list features and align on one.
+  2. **Plan:** If there is no approved plan yet, use `build_plan(feature_name)` (or suggest creating intent first with `cm_add_feature`), then get user approval before executing.
+  3. **Execute** only after an approved plan (and gate checks pass where required). Prefer `build_execute(plan_id)` when the workflow provides it; otherwise implement within the scope of the approved plan and context.
+  4. **After** implementing: verify with `context_validate` or `cm_status`; optionally run `cm_gate_check("build-to-learn", feature_name)` and then `learn_sync_initiate` to capture learnings.
+- **When MCP is not available:** Still follow the workflow: load context files (`@context/intent/`, `@context/decisions/`, `@context/agents/`), produce a plan in conversation, get explicit approval, then implement and update context (intent, decisions, changelog) afterward.
+
+This ensures that in Context Mesh–configured projects, **implement / execute / write** always go through context and, when possible, through MCP build, verify, and gate checks.
+
+---
+
+**Can the agent call MCP when the user asks for implementation out of context or not linked to context?**
+
+**Yes.** The agent can and should use MCP to learn, build, verify, and document — whether the work was governed (from a feature intent + plan) or ad-hoc (user asked for something not yet in context).
+
+### When implementation is *not* linked to context (ad-hoc)
+
+1. **Build (plan first)**  
+   - `build_plan(feature_name)` requires an existing feature in context. If the user asks to "implement login" and there is no feature intent:
+   - **Option A (governed):** Suggest creating context first: call `cm_add_feature` (and `cm_create_decision` if needed), then `build_plan(feature_name)`.
+   - **Option B (ad-hoc then document):** Implement what the user asked, then use MCP to bring it into context (see "Ensure living context" below).
+
+2. **Verify**  
+   - Always available: `context_validate`, `cm_status`, `cm_gate_check`, `cm_lifecycle_state`. Use these to check context health and gates regardless of whether the last change was from a plan or ad-hoc.
+
+3. **Learn / document after the fact**  
+   - To ensure **living context** after ad-hoc implementation:
+     1. **Document intent:** Call `cm_add_feature` with name, what, why, acceptance criteria for what was built (retroactive feature).
+     2. **Document decision (if applicable):** Call `cm_create_decision` for the technical approach used.
+     3. **Sync learnings:** Call `learn_sync_initiate(feature_name, user_feedback="...")` with the same feature name used in step 1 to capture outcomes and propose changelog/updates.
+     4. **Verify:** Call `context_validate` or `cm_status` to confirm context is consistent.
+
+### When to use MCP regardless of link to context
+
+| Goal | MCP tools to use |
+|------|-------------------|
+| **Verify** context integrity | `context_validate`, `cm_status`, `cm_gate_check` |
+| **Learn** after any implementation | `learn_sync_initiate` (after feature exists or was just added), `learn_sync_review`, `learn_sync_apply` |
+| **Document** ad-hoc work | `cm_add_feature`, `cm_create_decision`, then `learn_sync_initiate` |
+| **Check** lifecycle / next step | `cm_lifecycle_state`, `cm_suggest_next`, `cm_workflow_guide` |
+
+Agents are **operators, not authorities** (Decision 007). MCP does not block calls when work is "out of context"; it provides tools to **bring work into context** and **keep context living**. Use MCP to verify and to ensure living context after any implementation the user requested.
 
 ## 🎨 Code Style
 
