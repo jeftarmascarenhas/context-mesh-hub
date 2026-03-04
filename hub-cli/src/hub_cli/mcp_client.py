@@ -349,6 +349,45 @@ print(json.dumps({{"success": True, "content": result}}))
         except ImportError:
             return []
     
+    def get_detection_info(self) -> dict:
+        """Get information about how hub-core was detected.
+        
+        Returns:
+            dict with: found, path, method, uv_available
+        """
+        import shutil
+        import platform
+        import os
+        
+        hub_core_dir = self._find_hub_core_dir()
+        uv_path = shutil.which("uv")
+        
+        if hub_core_dir:
+            # Determine detection method
+            if os.environ.get("CONTEXT_MESH_HUB_CORE_PATH"):
+                method = "environment variable (CONTEXT_MESH_HUB_CORE_PATH)"
+            elif "cache" in str(hub_core_dir).lower() or "uv" in str(hub_core_dir).lower():
+                if platform.system() == "Windows":
+                    method = "uv cache (Windows: %LOCALAPPDATA%\\uv\\cache)"
+                else:
+                    method = "uv cache (~/.cache/uv/)"
+            else:
+                method = "local development path"
+            
+            return {
+                "found": True,
+                "path": str(hub_core_dir),
+                "method": method,
+                "uv_available": uv_path is not None,
+            }
+        else:
+            return {
+                "found": False,
+                "path": None,
+                "method": "not found",
+                "uv_available": uv_path is not None,
+            }
+    
     def get_mcp_config(self, use_uv: bool = True) -> dict:
         """Get MCP configuration for AI editors.
         

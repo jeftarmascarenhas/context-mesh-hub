@@ -229,12 +229,24 @@ def _get_slash_commands_templates_dir() -> Path:
 def _do_config(editor: str, raw: bool = False) -> None:
     """Show MCP config for the given editor (cursor, copilot, claude, gemini)."""
     client = MCPClient(get_repo_root())
+    
+    # Show detection info (unless raw mode)
+    if not raw:
+        info = client.get_detection_info()
+        if info["found"]:
+            console.print(f"[green]✓[/green] Detected hub-core: [cyan]{info['path']}[/cyan]")
+            console.print(f"  [dim]Method: {info['method']}[/dim]")
+        else:
+            console.print(f"[yellow]⚠[/yellow] Could not auto-detect hub-core path")
+            console.print(f"  [dim]Set CONTEXT_MESH_HUB_CORE_PATH environment variable to fix[/dim]")
+        console.print()
+    
     mcp_config = client.get_mcp_config_for_editor(editor)
     if raw:
         print_mcp_config(mcp_config, raw=True)
         return
     editor_info = MCP_EDITORS[editor]
-    console.print(f"\n[dim]MCP configuration for [bold]{editor_info['name']}[/bold]. Paste in: {editor_info['paste']}[/dim]\n")
+    console.print(f"[dim]MCP configuration for [bold]{editor_info['name']}[/bold]. Paste in: {editor_info['paste']}[/dim]\n")
     print_mcp_config(mcp_config, raw=False, editor=editor)
 
 
