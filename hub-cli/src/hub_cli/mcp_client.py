@@ -396,7 +396,10 @@ print(json.dumps({{"success": True, "content": result}}))
                    If False, use direct Python execution.
         """
         import os
+        import platform
         import shutil
+        
+        is_windows = platform.system() == "Windows"
         
         # Find hub-core directory
         hub_core_dir = self._find_hub_core_dir()
@@ -421,23 +424,30 @@ print(json.dumps({{"success": True, "content": result}}))
         
         # Fallback: Find venv python (has fastmcp installed)
         def find_venv_python() -> str | None:
+            # Platform-specific venv python path
+            if is_windows:
+                venv_subpath = Path("Scripts") / "python.exe"
+            else:
+                venv_subpath = Path("bin") / "python"
+            
             # Check in hub project root
             hub_root = Path.home() / "Jeftar" / "hub"
-            venv_python = hub_root / ".venv" / "bin" / "python"
+            venv_python = hub_root / ".venv" / venv_subpath
             if venv_python.exists():
                 return str(venv_python)
             
             # Check for local development
             hub_core_path = self._find_hub_core_path()
             if hub_core_path:
-                venv_path = Path(hub_core_path).parent.parent / ".venv" / "bin" / "python"
+                venv_path = Path(hub_core_path).parent.parent / ".venv" / venv_subpath
                 if venv_path.exists():
                     return str(venv_path)
             
             return None
         
         venv_python = find_venv_python()
-        python_cmd = venv_python if venv_python else "python3"
+        # Use 'python' on Windows, 'python3' on Unix
+        python_cmd = venv_python if venv_python else ("python" if is_windows else "python3")
         
         # Check for environment variable override
         hub_core_env = os.environ.get("CONTEXT_MESH_HUB_CORE_PATH")
@@ -480,11 +490,11 @@ print(json.dumps({{"success": True, "content": result}}))
         # Check if hub_core is installed globally
         try:
             import hub_core
-            # Installed via pip/uv
+            # Installed via pip/uv - use platform-appropriate python command
             return {
                 "mcpServers": {
                     "context-mesh-hub": {
-                        "command": "python3",
+                        "command": "python" if is_windows else "python3",
                         "args": ["-m", "hub_core.server"]
                     }
                 }
@@ -500,12 +510,18 @@ print(json.dumps({{"success": True, "content": result}}))
             Path.home() / "dev" / "context-mesh-hub" / "hub-core" / "src",
         ]
         
+        # Add Windows-specific paths
+        if is_windows:
+            common_paths.append(Path.home() / "source" / "repos" / "context-mesh-hub" / "hub-core" / "src")
+        
+        default_python = "python" if is_windows else "python3"
+        
         for path in common_paths:
             if path.exists():
                 return {
                     "mcpServers": {
                         "context-mesh-hub": {
-                            "command": "python3",
+                            "command": default_python,
                             "args": ["-m", "hub_core.server"],
                             "env": {
                                 "PYTHONPATH": str(path)
@@ -518,7 +534,7 @@ print(json.dumps({{"success": True, "content": result}}))
         return {
             "mcpServers": {
                 "context-mesh-hub": {
-                    "command": "python3",
+                    "command": default_python,
                     "args": ["-m", "hub_core.server"],
                     "env": {
                         "PYTHONPATH": "/path/to/hub-core/src"

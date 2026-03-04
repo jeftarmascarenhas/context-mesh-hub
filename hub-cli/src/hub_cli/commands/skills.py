@@ -30,20 +30,55 @@ AGENT_NAMES = {
 
 
 def get_bundled_skill_path() -> Optional[Path]:
-    """Get path to bundled context-mesh skill."""
-    # First try bundled with package
+    """Get path to bundled context-mesh skill.
+    
+    Search order:
+    1. Bundled with package (templates/skills/context-mesh)
+    2. uv cache (Windows: %LOCALAPPDATA%/uv/cache, Unix: ~/.cache/uv)
+    3. Local development paths
+    """
+    import platform
+    import os
+    
+    # 1. First try bundled with package
     bundled = Path(__file__).parent.parent / "templates" / "skills" / "context-mesh"
     if bundled.exists():
         return bundled
     
-    # Fallback to development paths
+    # 2. Try uv cache (for uv tool install)
+    if platform.system() == "Windows":
+        local_app_data = os.environ.get("LOCALAPPDATA", "")
+        if local_app_data:
+            uv_cache = Path(local_app_data) / "uv" / "cache" / "git-v0" / "checkouts"
+        else:
+            uv_cache = None
+    else:
+        uv_cache = Path.home() / ".cache" / "uv" / "git-v0" / "checkouts"
+    
+    if uv_cache and uv_cache.exists():
+        # Look for context-mesh-hub checkouts
+        for checkout_dir in uv_cache.iterdir():
+            if checkout_dir.is_dir():
+                for rev_dir in checkout_dir.iterdir():
+                    if rev_dir.is_dir():
+                        # Check for hub-cli templates
+                        skill_path = rev_dir / "hub-cli" / "src" / "hub_cli" / "templates" / "skills" / "context-mesh"
+                        if skill_path.exists():
+                            return skill_path
+                        # Also check root .github/skills (for monorepo structure)
+                        skill_path = rev_dir / ".github" / "skills" / "context-mesh"
+                        if skill_path.exists():
+                            return skill_path
+    
+    # 3. Fallback to development paths
     dev_paths = [
-        Path.home() / "Jeftar" / "hub" / ".github" / "skills" / "context-mesh",
         Path(__file__).parent.parent.parent.parent.parent.parent / ".github" / "skills" / "context-mesh",
+        Path.home() / "Jeftar" / "hub" / ".github" / "skills" / "context-mesh",
     ]
     for p in dev_paths:
         if p.exists():
             return p
+    
     return None
 
 
