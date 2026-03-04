@@ -1,3 +1,16 @@
+---
+id: F006
+type: feature
+title: Refactor Hub-Core Architecture
+status: completed
+priority: high
+created: 2026-03-04
+updated: 2026-03-04
+depends_on: [F004]
+decisions: [D001]
+agents: []
+---
+
 # Feature: Refactor Hub-Core Architecture
 
 ## What

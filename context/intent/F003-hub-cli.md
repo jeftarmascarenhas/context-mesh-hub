@@ -1,3 +1,16 @@
+---
+id: F003
+type: feature
+title: Hub CLI (Bootstrap, Runtime, and Diagnostics)
+status: in-progress
+priority: high
+created: 2026-03-04
+updated: 2026-03-04
+depends_on: [F004]
+decisions: [D011]
+agents: []
+---
+
 # Feature Intent: Hub CLI (Bootstrap, Runtime, and Diagnostics)
 
 ## What

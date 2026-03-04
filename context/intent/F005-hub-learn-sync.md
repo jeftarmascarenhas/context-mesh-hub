@@ -1,3 +1,16 @@
+---
+id: F005
+type: feature
+title: Hub Learn Sync (Explicit Learning & Context Evolution)
+status: in-progress
+priority: medium
+created: 2026-03-04
+updated: 2026-03-04
+depends_on: [F002, F004]
+decisions: [D008, D009]
+agents: []
+---
+
 # Feature Intent: Hub Learn Sync (Explicit Learning & Context Evolution)
 
 ## What

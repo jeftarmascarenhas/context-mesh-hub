@@ -1,3 +1,16 @@
+---
+id: D002
+type: decision
+title: MCP Tool Contracts
+status: accepted
+created: 2026-03-04
+updated: 2026-03-04
+features: [F004]
+supersedes: null
+superseded_by: D013
+related: []
+---
+
 # Decision: MCP Tool Contracts
 
 ## Context

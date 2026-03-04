@@ -1,3 +1,16 @@
+---
+id: D014
+type: decision
+title: Brownfield Extraction - Artifact Classification Strategy
+status: accepted
+created: 2026-03-04
+updated: 2026-03-04
+features: [F001]
+supersedes: null
+superseded_by: null
+related: [D005]
+---
+
 # Decision: Brownfield Extraction - Artifact Classification Strategy
 
 ## Context

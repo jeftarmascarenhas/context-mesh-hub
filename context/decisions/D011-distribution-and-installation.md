@@ -1,3 +1,16 @@
+---
+id: D011
+type: decision
+title: Distribution and Installation Strategy
+status: accepted
+created: 2026-03-04
+updated: 2026-03-04
+features: [F003]
+supersedes: null
+superseded_by: null
+related: []
+---
+
 # Decision: Distribution and Installation Strategy
 
 ## Context

@@ -1,3 +1,16 @@
+---
+id: F001
+type: feature
+title: Hub Brownfield (Existing Projects & Large Codebases)
+status: in-progress
+priority: high
+created: 2026-03-04
+updated: 2026-03-04
+depends_on: []
+decisions: [D005]
+agents: []
+---
+
 # Feature Intent: Hub Brownfield (Existing Projects & Large Codebases)
 
 ## What

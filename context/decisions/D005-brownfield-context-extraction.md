@@ -1,3 +1,16 @@
+---
+id: D005
+type: decision
+title: Brownfield Context Extraction Strategy
+status: accepted
+created: 2026-03-04
+updated: 2026-03-04
+features: [F001]
+supersedes: null
+superseded_by: null
+related: [D014]
+---
+
 # Decision: Brownfield Context Extraction Strategy
 
 ## Context

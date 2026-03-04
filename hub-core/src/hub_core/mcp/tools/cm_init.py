@@ -113,7 +113,15 @@ def register_cm_init(
             desc = project_description or "_Describe what this project does_"
             
             files_to_create = {
-                "context/intent/project-intent.md": f"""# Project Intent: {name}
+                "context/intent/project-intent.md": f"""---
+type: project
+title: {name}
+status: active
+created: {today}
+updated: {today}
+---
+
+# Project Intent: {name}
 
 ## What
 
@@ -157,11 +165,6 @@ _Technical, business, or organizational constraints_
 
 - [Feature: F001 - Name](./F001-*.md)
 - [Decision: D001 - Name](../decisions/D001-*.md)
-
-## Status
-
-- **Created**: {today}
-- **Status**: Active
 """,
                 "context/evolution/changelog.md": f"""# Changelog
 
@@ -418,7 +421,18 @@ After completing any feature:
                     for a in proposed_artifacts[:10]
                 ],
                 "files_to_create": {
-                    "context/intent/project-intent.md": f"""# Project Intent: {name}
+                    "context/intent/project-intent.md": f"""---
+type: project
+title: {name}
+status: active
+created: {today}
+updated: {today}
+languages: {analysis.languages}
+frameworks: {analysis.frameworks}
+file_count: {analysis.file_count}
+---
+
+# Project Intent: {name}
 
 ## What
 
@@ -464,13 +478,21 @@ _Technical justification_
 ## Related
 
 - [Decision: D001 - Tech Stack](../decisions/D001-tech-stack.md)
-
-## Status
-
-- **Created**: {today}
-- **Status**: Active
 """,
-                    "context/decisions/D001-tech-stack.md": f"""# Decision: Tech Stack
+                    "context/decisions/D001-tech-stack.md": f"""---
+id: D001
+type: decision
+title: Tech Stack
+status: accepted
+created: {today}
+updated: {today}
+features: []
+supersedes: null
+superseded_by: null
+related: []
+---
+
+# Decision: Tech Stack
 
 ## Context
 
@@ -510,11 +532,6 @@ Brownfield project - maintaining existing technology choices for continuity and 
 ## Related
 
 - [Project Intent](../intent/project-intent.md)
-
-## Status
-
-- **Created**: {today}
-- **Status**: Accepted
 """,
                     "AGENTS.md": f"""# AGENTS.md - {name}
 

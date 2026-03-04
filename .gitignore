@@ -1,6 +1,6 @@
 # Context Mesh Hub - Root .gitignore
-context-mesh-1.1.0.zip
-# context-mesh-1.1.0
+context-mesh-1.1.0
+spec-kit-main
 
 # Python (hub-core)
 __pycache__/
@@ -103,6 +103,8 @@ temp/
 # User-specific prompt pack cache (not versioned)
 # Note: Bundled prompt packs in hub-core/prompt-packs/ ARE versioned
 ~/.context-mesh-hub/
+
+
 
 # Local overrides (repo-specific)
 .context-mesh/prompts/

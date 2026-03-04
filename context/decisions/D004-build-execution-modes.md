@@ -1,3 +1,16 @@
+---
+id: D004
+type: decision
+title: Build Execution Modes
+status: accepted
+created: 2026-03-04
+updated: 2026-03-04
+features: [F002]
+supersedes: null
+superseded_by: null
+related: []
+---
+
 # Decision: Build Execution Modes
 
 ## Context

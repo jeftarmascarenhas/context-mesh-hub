@@ -1,3 +1,16 @@
+---
+id: D010
+type: decision
+title: Prompt Pack Resolution and Update Model
+status: accepted
+created: 2026-03-04
+updated: 2026-03-04
+features: [F004]
+supersedes: null
+superseded_by: D013
+related: []
+---
+
 # Decision 010: Prompt Pack Resolution and Update Model
 
 ## Context

@@ -41,6 +41,19 @@ context/
 ### Structure (Required Sections)
 
 ```markdown
+---
+id: F001
+type: feature
+title: User Authentication
+status: draft | in-progress | completed | blocked | abandoned
+priority: high | medium | low
+created: 2024-01-15
+updated: 2024-01-15
+depends_on: []
+decisions: [D001, D002]
+agents: []
+---
+
 # Feature: [Title]
 
 ## What
@@ -69,21 +82,30 @@ context/
 
 - **Decision**: [DXX - Name](../decisions/DXX-*.md)
 - **Feature**: [FYY - Name](./FYY-*.md)
-
-## Status
-
-- **Created**: YYYY-MM-DD
-- **Status**: Active | Completed | Replaced | Abandoned
 ```
 
 ### Required Fields
 
+#### YAML Frontmatter
+| Field | Required | Description |
+|-------|----------|-------------|
+| `id` | ✅ Yes | Feature ID (F001, F002...) |
+| `type` | ✅ Yes | Always "feature" |
+| `title` | ✅ Yes | Feature title |
+| `status` | ✅ Yes | draft, in-progress, completed, blocked, abandoned |
+| `created` | ✅ Yes | ISO date (YYYY-MM-DD) |
+| `updated` | ✅ Yes | ISO date (YYYY-MM-DD) |
+| `priority` | ⚠️ Recommended | high, medium, low |
+| `depends_on` | ⚠️ Recommended | Array of feature IDs |
+| `decisions` | ⚠️ Recommended | Array of decision IDs |
+| `agents` | ❌ Optional | Array of agent IDs |
+
+#### Markdown Content
 | Field | Required | Description |
 |-------|----------|-------------|
 | `What` | ✅ Yes | What will be built |
 | `Why` | ✅ Yes | Business/technical justification |
 | `Acceptance Criteria` | ✅ Yes | Measurable success criteria (checkboxes) |
-| `Status` | ✅ Yes | Created date + current status |
 | `How` | ⚠️ Recommended | Implementation approach |
 | `Constraints` | ❌ Optional | Known limitations |
 | `Related` | ⚠️ Recommended | Links to decisions/features |
@@ -104,6 +126,19 @@ context/
 ### Structure (Required Sections)
 
 ```markdown
+---
+id: D001
+type: decision
+title: Tech Stack Selection
+status: proposed | accepted | superseded | deprecated
+created: 2024-01-10
+updated: 2024-01-10
+features: [F001, F002]
+supersedes: null
+superseded_by: null
+related: []
+---
+
 # Decision: [Title]
 
 ## Context
@@ -140,21 +175,30 @@ context/
 
 - [Feature: FXX - Name](../intent/FXX-*.md)
 - [Decision: DYY - Name](./DYY-*.md)
-
-## Status
-
-- **Created**: YYYY-MM-DD
-- **Status**: Proposed | Accepted | Superseded by DYY | Deprecated
 ```
 
 ### Required Fields
 
+#### YAML Frontmatter
+| Field | Required | Description |
+|-------|----------|-------------|
+| `id` | ✅ Yes | Decision ID (D001, D002...) |
+| `type` | ✅ Yes | Always "decision" |
+| `title` | ✅ Yes | Decision title |
+| `status` | ✅ Yes | proposed, accepted, superseded, deprecated |
+| `created` | ✅ Yes | ISO date (YYYY-MM-DD) |
+| `updated` | ✅ Yes | ISO date (YYYY-MM-DD) |
+| `features` | ⚠️ Recommended | Array of feature IDs |
+| `supersedes` | ⚠️ Recommended | Decision ID or null |
+| `superseded_by` | ⚠️ Recommended | Decision ID or null |
+| `related` | ❌ Optional | Array of related artifact IDs |
+
+#### Markdown Content
 | Field | Required | Description |
 |-------|----------|-------------|
 | `Context` | ✅ Yes | Problem statement and background |
 | `Decision` | ✅ Yes | The actual decision made |
 | `Rationale` | ✅ Yes | Why this decision |
-| `Status` | ✅ Yes | Created date + current status |
 | `Alternatives Considered` | ⚠️ Recommended | Other options evaluated |
 | `Consequences` | ⚠️ Recommended | Expected positive/negative effects |
 | `Outcomes` | ❌ Optional | Actual results (added later) |

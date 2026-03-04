@@ -69,7 +69,23 @@ class IntentService:
         
         related_dec = "\n".join(f"- {d}" for d in (related_decisions or [])) or "_None yet_"
         
-        file_content = f"""# Feature {feat_num}: {title}
+        dec_ids = [d.replace("D", "").replace("-", "").strip() if isinstance(d, str) and d.startswith("D") else d for d in (related_decisions or [])]
+        dec_ids_yaml = "[" + ", ".join(f'"{d}"' if d else "" for d in dec_ids) + "]" if dec_ids else "[]"
+        
+        file_content = f"""---
+id: {feat_num}
+type: feature
+title: {title}
+status: draft
+priority: medium
+created: {today}
+updated: {today}
+depends_on: []
+decisions: {dec_ids_yaml}
+agents: []
+---
+
+# Feature {feat_num}: {title}
 
 ## What
 
@@ -86,11 +102,6 @@ class IntentService:
 ## Related Decisions
 
 {related_dec}
-
-## Status
-
-- **Created**: {today}
-- **Status**: Draft
 """
         
         return {
@@ -240,7 +251,24 @@ class IntentService:
         rel_feat = ", ".join(related_features or []) or "_None_"
         rel_dec = ", ".join(related_decisions or []) or "_None_"
         
-        file_content = f"""# Decision {dec_num}: {title}
+        # Extract IDs for YAML
+        feat_ids = [f.replace("F", "").replace("-", "").strip() if isinstance(f, str) and f.startswith("F") else f for f in (related_features or [])]
+        feat_ids_yaml = "[" + ", ".join(f'"{f}"' if f else "" for f in feat_ids) + "]" if feat_ids else "[]"
+        
+        file_content = f"""---
+id: {dec_num}
+type: decision
+title: {title}
+status: accepted
+created: {today}
+updated: {today}
+features: {feat_ids_yaml}
+supersedes: null
+superseded_by: null
+related: []
+---
+
+# Decision {dec_num}: {title}
 
 ## Context
 
@@ -270,11 +298,6 @@ class IntentService:
 
 - Features: {rel_feat}
 - Decisions: {rel_dec}
-
-## Status
-
-- **Date**: {today}
-- **Status**: Accepted
 """
         
         return {

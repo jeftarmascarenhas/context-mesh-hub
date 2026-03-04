@@ -1,3 +1,16 @@
+---
+id: D007
+type: decision
+title: Agent Scope and Authority
+status: accepted
+created: 2026-03-04
+updated: 2026-03-04
+features: [F002, F004]
+supersedes: null
+superseded_by: null
+related: []
+---
+
 # Decision: Agent Scope and Authority
 
 ## Context

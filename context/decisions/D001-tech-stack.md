@@ -1,3 +1,16 @@
+---
+id: D001
+type: decision
+title: Technology Stack
+status: accepted
+created: 2026-03-04
+updated: 2026-03-04
+features: [F003, F004]
+supersedes: null
+superseded_by: null
+related: []
+---
+
 # Decision: Technology Stack
 
 ## Context

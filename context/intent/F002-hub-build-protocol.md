@@ -1,3 +1,16 @@
+---
+id: F002
+type: feature
+title: Hub Build Protocol (Plan / Approve / Execute)
+status: in-progress
+priority: high
+created: 2026-03-04
+updated: 2026-03-04
+depends_on: [F004]
+decisions: [D004]
+agents: []
+---
+
 # Feature Intent: Hub Build Protocol (Plan / Approve / Execute)
 
 ## What

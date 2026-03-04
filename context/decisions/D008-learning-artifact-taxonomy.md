@@ -1,3 +1,16 @@
+---
+id: D008
+type: decision
+title: Learning Artifact Taxonomy
+status: accepted
+created: 2026-03-04
+updated: 2026-03-04
+features: [F005]
+supersedes: null
+superseded_by: null
+related: [D009]
+---
+
 # Decision: Learning Artifact Taxonomy
 
 ## Context

@@ -1,3 +1,16 @@
+---
+id: D009
+type: decision
+title: Context Evolution Rules
+status: accepted
+created: 2026-03-04
+updated: 2026-03-04
+features: [F005]
+supersedes: null
+superseded_by: null
+related: [D008]
+---
+
 # Decision: Context Evolution Rules
 
 ## Context

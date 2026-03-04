@@ -1,3 +1,16 @@
+---
+id: F004
+type: feature
+title: Hub Core (MCP + Context Engine)
+status: in-progress
+priority: high
+created: 2026-03-04
+updated: 2026-03-04
+depends_on: []
+decisions: [D001, D002, D003, D013]
+agents: []
+---
+
 # Feature Intent: Hub Core (MCP + Context Engine)
 
 ## What
