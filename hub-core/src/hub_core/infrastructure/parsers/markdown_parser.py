@@ -77,8 +77,8 @@ class MarkdownParser:
             >>> MarkdownParser.extract_section(content, "What")
             'Auth system'
         """
-        # Match ## Section or ### Section
-        pattern = rf"###+\s+{re.escape(section_name)}\s*\n(.*?)(?=\n##|$)"
+        # Match ## Section or ### Section (2 or 3 hashes)
+        pattern = rf"##{{2,3}}\s+{re.escape(section_name)}\s*\n(.*?)(?=\n##|$)"
         match = re.search(pattern, content, re.DOTALL | re.IGNORECASE)
         
         if match:
