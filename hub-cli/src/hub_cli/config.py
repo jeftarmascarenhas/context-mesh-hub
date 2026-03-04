@@ -190,10 +190,14 @@ MCP_EDITORS = {
 }
 
 # Where to install slash commands per agent (relative to project root)
-# Cursor: .cursor/commands/*.md; Copilot: .github/prompts/*.md; Claude: .claude/commands/*.md; Gemini: .gemini/commands/*.toml
+# Cursor: .cursor/commands/*.md (slash commands)
+# Copilot: .github/copilot-instructions.md (single file, always-on) + .instructions.md (file-based)
+# Claude: .claude/commands/*.md (slash commands)
+# Gemini: .gemini/commands/*.toml (slash commands)
+# Note: Copilot doesn't support slash commands like Cursor. Instead, we update copilot-instructions.md
 AGENT_COMMAND_DIRS = {
     "cursor": ".cursor/commands",
-    "copilot": ".github/prompts",
+    "copilot": ".github",  # Uses copilot-instructions.md (single file)
     "claude": ".claude/commands",
     "gemini": ".gemini/commands",
 }
