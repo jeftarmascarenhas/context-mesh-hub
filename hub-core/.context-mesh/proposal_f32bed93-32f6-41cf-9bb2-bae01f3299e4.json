@@ -1,0 +1,61 @@
+{
+  "proposal_id": "f32bed93-32f6-41cf-9bb2-bae01f3299e4",
+  "feature_name": "F006-refactor-hub-core-architecture",
+  "created_at": "2026-03-04T10:10:56.643532",
+  "outcome_summary": {
+    "what_implemented": [
+      "Modified 30 file(s)"
+    ],
+    "what_failed": [],
+    "unexpected_difficulties": [],
+    "wrong_assumptions": [],
+    "discovered_constraints": [],
+    "evidence_files": [
+      "hub-core/src/hub_core/server.py",
+      "hub-core/src/hub_core/__init__.py",
+      "hub-core/src/hub_core/domain/models/analysis.py",
+      "hub-core/src/hub_core/domain/models/build.py",
+      "hub-core/src/hub_core/domain/models/learn.py",
+      "hub-core/src/hub_core/domain/services/intent_service.py",
+      "hub-core/src/hub_core/domain/services/build_service.py",
+      "hub-core/src/hub_core/domain/services/analysis_service.py",
+      "hub-core/src/hub_core/domain/services/learn_service.py",
+      "hub-core/src/hub_core/infrastructure/parsers/markdown_parser.py",
+      "hub-core/src/hub_core/infrastructure/parsers/extractor.py",
+      "hub-core/src/hub_core/infrastructure/persistence/file_store.py",
+      "hub-core/src/hub_core/infrastructure/persistence/plan_repository.py",
+      "hub-core/src/hub_core/infrastructure/persistence/proposal_repository.py",
+      "hub-core/src/hub_core/infrastructure/scanner/repo_scanner.py",
+      "hub-core/src/hub_core/infrastructure/scanner/slice_generator.py",
+      "hub-core/src/hub_core/infrastructure/scanner/context_extractor.py",
+      "hub-core/src/hub_core/mcp/tools/cm_init.py",
+      "hub-core/src/hub_core/mcp/tools/cm_intent.py",
+      "hub-core/src/hub_core/mcp/tools/cm_agent.py",
+      "hub-core/src/hub_core/mcp/tools/cm_analyze.py",
+      "hub-core/src/hub_core/mcp/tools/cm_build.py",
+      "hub-core/src/hub_core/mcp/tools/cm_learn.py",
+      "hub-core/src/hub_core/mcp/tools/cm_validate.py",
+      "hub-core/src/hub_core/mcp/tools/cm_status.py",
+      "hub-core/src/hub_core/mcp/decorators.py",
+      "hub-core/src/hub_core/shared/errors.py",
+      "hub-core/src/hub_core/shared/config.py",
+      "hub-core/src/hub_core/shared/utils.py",
+      "hub-core/tests/test_learn_sync.py"
+    ],
+    "evidence_logs": [],
+    "unknowns": []
+  },
+  "learning_drafts": [],
+  "context_updates": [],
+  "changelog_entry": {
+    "date": "2026-03-04",
+    "what_changed": "Implemented F006-refactor-hub-core-architecture feature",
+    "why_changed": "Learn Sync after F006-refactor-hub-core-architecture execution. Captured implementation outcomes.",
+    "related_features": [
+      "F006-refactor-hub-core-architecture"
+    ],
+    "related_decisions": [],
+    "learning_artifacts": [],
+    "status": "Proposed"
+  }
+}

@@ -1,4 +1,8 @@
-"""MCP Client for connecting to Context Mesh Hub server."""
+"""MCP Client for connecting to Context Mesh Hub server.
+
+Updated for MCP Simplification (D013): 8 consolidated tools.
+Provides backward compatibility mapping from old tool names to new tools.
+"""
 
 import asyncio
 import json
@@ -10,12 +14,75 @@ from typing import Any, Optional
 from pydantic import BaseModel
 
 
+# Tool mapping for backward compatibility (D013 MCP Simplification)
+# Maps old tool names to new consolidated tool + action/type
+TOOL_MIGRATION_MAP: dict[str, dict[str, Any]] = {
+    # cm_init consolidates project initialization
+    "cm_new_project": {"tool": "cm_init", "params": {"action": "new"}},
+    "cm_existing_project": {"tool": "cm_init", "params": {"action": "existing"}},
+    
+    # cm_intent consolidates feature/decision/bug CRUD
+    "cm_add_feature": {"tool": "cm_intent", "params": {"action": "create", "type": "feature"}},
+    "cm_update_feature": {"tool": "cm_intent", "params": {"action": "update", "type": "feature"}},
+    "cm_list_features": {"tool": "cm_intent", "params": {"action": "list", "type": "feature"}},
+    "cm_fix_bug": {"tool": "cm_intent", "params": {"action": "create", "type": "bug"}},
+    "cm_create_decision": {"tool": "cm_intent", "params": {"action": "create", "type": "decision"}},
+    "intent_add_feature": {"tool": "cm_intent", "params": {"action": "create", "type": "feature"}},
+    "context_read": {"tool": "cm_intent", "params": {"action": "get"}},
+    
+    # cm_agent consolidates agent management
+    "cm_create_agent": {"tool": "cm_agent", "params": {"action": "create"}},
+    "intent_create_agent": {"tool": "cm_agent", "params": {"action": "create"}},
+    
+    # cm_build consolidates build protocol
+    "build_plan": {"tool": "cm_build", "params": {"action": "plan"}},
+    "build_approve": {"tool": "cm_build", "params": {"action": "approve"}},
+    "build_execute": {"tool": "cm_build", "params": {"action": "execute"}},
+    "context_bundle": {"tool": "cm_build", "params": {"action": "bundle"}},
+    
+    # cm_validate is standalone
+    "context_validate": {"tool": "cm_validate", "params": {}},
+    
+    # cm_analyze consolidates brownfield/analysis
+    "brownfield_scan": {"tool": "cm_analyze", "params": {"action": "scan"}},
+    "brownfield_slice": {"tool": "cm_analyze", "params": {"action": "slice"}},
+    "brownfield_extract": {"tool": "cm_analyze", "params": {"action": "extract"}},
+    "brownfield_report": {"tool": "cm_analyze", "params": {"action": "report"}},
+    
+    # cm_learn consolidates learn sync
+    "learn_sync_initiate": {"tool": "cm_learn", "params": {"action": "initiate"}},
+    "learn_sync_review": {"tool": "cm_learn", "params": {"action": "review"}},
+    "learn_sync_accept": {"tool": "cm_learn", "params": {"action": "accept"}},
+    "learn_sync_apply": {"tool": "cm_learn", "params": {"action": "apply"}},
+    
+    # cm_status consolidates status tools
+    "cm_status": {"tool": "cm_status", "params": {}},
+    "hub_health": {"tool": "cm_status", "params": {}},
+    "cm_lifecycle_state": {"tool": "cm_status", "params": {}},
+    "cm_suggest_next": {"tool": "cm_status", "params": {}},
+    "cm_workflow_guide": {"tool": "cm_status", "params": {}},
+}
+
+# New consolidated tools (8 total per D013)
+CONSOLIDATED_TOOLS = {
+    "cm_init",      # actions: new, existing, migrate
+    "cm_intent",    # actions: create, update, get, list, delete; types: feature, decision, bug
+    "cm_agent",     # actions: create, update, get, list, delete
+    "cm_build",     # actions: bundle, plan, approve, execute
+    "cm_validate",  # structure, links, status validation
+    "cm_analyze",   # actions: scan, slice, extract, report, impact, dependencies
+    "cm_learn",     # actions: initiate, review, accept, apply
+    "cm_status",    # overview, lifecycle, suggestions
+}
+
+
 class MCPToolResult(BaseModel):
     """Result from an MCP tool call."""
     
     success: bool
     content: Any
     error: Optional[str] = None
+    migrated_from: Optional[str] = None  # Track if tool was migrated
 
 
 class MCPClient:
@@ -24,6 +91,9 @@ class MCPClient:
     This client can operate in two modes:
     1. Direct mode: Import and call hub_core directly (for local development)
     2. Subprocess mode: Spawn the MCP server and communicate via stdio
+    
+    Updated for MCP Simplification (D013): Supports both old and new tool names.
+    Old tool names are automatically mapped to new consolidated tools.
     """
     
     def __init__(self, repo_root: Optional[Path] = None):
@@ -35,11 +105,38 @@ class MCPClient:
         self.repo_root = repo_root or Path.cwd()
         self._server_process: Optional[subprocess.Popen] = None
     
+    def _migrate_tool_call(self, tool_name: str, arguments: dict[str, Any]) -> tuple[str, dict[str, Any], Optional[str]]:
+        """Migrate old tool names to new consolidated tools.
+        
+        Args:
+            tool_name: Original tool name
+            arguments: Original arguments
+            
+        Returns:
+            Tuple of (new_tool_name, merged_arguments, old_tool_name_if_migrated)
+        """
+        if tool_name in CONSOLIDATED_TOOLS:
+            # Already using new tool name
+            return tool_name, arguments, None
+        
+        if tool_name in TOOL_MIGRATION_MAP:
+            migration = TOOL_MIGRATION_MAP[tool_name]
+            new_tool = migration["tool"]
+            new_params = {**migration["params"], **arguments}
+            return new_tool, new_params, tool_name
+        
+        # Unknown tool, pass through (server will handle error)
+        return tool_name, arguments, None
+    
     async def call_tool(self, tool_name: str, arguments: dict[str, Any] = None) -> MCPToolResult:
         """Call an MCP tool.
         
+        Supports both old and new tool names. Old tool names are automatically
+        migrated to the new consolidated tools per D013.
+        
         Args:
-            tool_name: Name of the tool to call (e.g., 'cm_help', 'cm_add_feature')
+            tool_name: Name of the tool to call (e.g., 'cm_status', 'cm_intent')
+                       Old names like 'cm_add_feature' are still supported.
             arguments: Arguments to pass to the tool
             
         Returns:
@@ -47,12 +144,67 @@ class MCPClient:
         """
         arguments = arguments or {}
         
+        # Migrate old tool names to new consolidated tools
+        actual_tool, merged_args, migrated_from = self._migrate_tool_call(tool_name, arguments)
+        
         try:
             # Try direct import first (for development)
-            return await self._call_tool_direct(tool_name, arguments)
+            result = await self._call_tool_direct(actual_tool, merged_args)
+            if migrated_from:
+                result.migrated_from = migrated_from
+            return result
         except ImportError:
             # Fall back to subprocess mode
-            return await self._call_tool_subprocess(tool_name, arguments)
+            result = await self._call_tool_subprocess(actual_tool, merged_args)
+            if migrated_from:
+                result.migrated_from = migrated_from
+            return result
+    
+    async def call_consolidated_tool(
+        self, 
+        tool: str, 
+        action: Optional[str] = None,
+        type: Optional[str] = None,
+        **kwargs
+    ) -> MCPToolResult:
+        """Call a consolidated MCP tool with explicit action/type.
+        
+        This is the preferred method for calling the new 8 consolidated tools.
+        
+        Args:
+            tool: One of cm_init, cm_intent, cm_agent, cm_build, cm_validate,
+                  cm_analyze, cm_learn, cm_status
+            action: Action to perform (e.g., 'create', 'update', 'list')
+            type: Type of artifact (e.g., 'feature', 'decision', 'bug')
+            **kwargs: Additional arguments for the tool
+            
+        Returns:
+            MCPToolResult with the tool's response
+            
+        Examples:
+            # Create a feature
+            await client.call_consolidated_tool('cm_intent', action='create', type='feature', name='auth')
+            
+            # Create a build plan
+            await client.call_consolidated_tool('cm_build', action='plan', feature_name='auth')
+            
+            # Initiate learn sync
+            await client.call_consolidated_tool('cm_learn', action='initiate', feature_name='auth')
+        """
+        if tool not in CONSOLIDATED_TOOLS:
+            return MCPToolResult(
+                success=False, 
+                content=None, 
+                error=f"Unknown consolidated tool: {tool}. Valid tools: {', '.join(CONSOLIDATED_TOOLS)}"
+            )
+        
+        arguments = {**kwargs}
+        if action:
+            arguments["action"] = action
+        if type:
+            arguments["type"] = type
+        
+        return await self.call_tool(tool, arguments)
     
     def _find_hub_core_path(self) -> Optional[Path]:
         """Find hub_core source path."""
@@ -87,6 +239,7 @@ class MCPClient:
             sys.path.insert(0, str(hub_core_path))
         
         from hub_core.server import create_server
+        import inspect
         
         # Create server instance
         server = create_server(self.repo_root)
@@ -96,7 +249,7 @@ class MCPClient:
         for tool in server._tool_manager._tools.values():
             if tool.name == tool_name:
                 # Call the tool function
-                result = await tool.fn(**arguments) if asyncio.iscoroutinefunction(tool.fn) else tool.fn(**arguments)
+                result = await tool.fn(**arguments) if inspect.iscoroutinefunction(tool.fn) else tool.fn(**arguments)
                 return MCPToolResult(success=True, content=result)
         
         return MCPToolResult(success=False, content=None, error=f"Tool not found: {tool_name}")

@@ -18,8 +18,28 @@ You **MUST** consider the user input before proceeding (if not empty).
 
 The text the user typed after `/cm-sync-learn` is optional feature name or summary — use it if present.
 
-**If Context Mesh Hub MCP is available:** Call the MCP tool `learn_sync_initiate` with the feature name and optional user_feedback (what was implemented, what worked, what was hard). If the user didn't specify a feature, ask or use the most recently implemented feature. Then the user can review and apply with learn_sync_review and learn_sync_apply.
+**If Context Mesh Hub MCP is available:** Call the MCP tool:
 
-**If MCP is not available:** Load @context/.context-mesh-framework.md and @context/intent/feature-[name].md. Ask what was implemented, what worked, what was challenging. Propose updates to decision Outcomes, new patterns/anti-patterns if any, and a changelog entry. Create or update context/evolution/changelog.md and decision Outcomes.
+```
+cm_learn(action="initiate", feature_name="<name>", user_feedback="<what was implemented, what worked, what was hard>")
+```
+
+If the user didn't specify a feature, ask or use the most recently implemented feature. Then the user can review and apply with:
+
+```
+cm_learn(action="review", proposal_id="<id>")
+cm_learn(action="apply", proposal_id="<id>")
+```
+
+**If MCP is not available:** Load @context/.context-mesh-framework.md and @context/intent/F###-[name].md. Ask what was implemented, what worked, what was challenging. Propose updates to decision Outcomes, new patterns/anti-patterns if any, and a changelog entry. Create or update context/evolution/changelog.md and decision Outcomes.
 
 Report completion with the proposal path and suggested next step (e.g. `/cm-learn` to review and apply).
+
+## MCP Tool Reference (D013 Consolidated)
+
+| Old Tool | New Tool Call |
+|----------|---------------|
+| learn_sync_initiate | cm_learn(action="initiate") |
+| learn_sync_review | cm_learn(action="review") |
+| learn_sync_accept | cm_learn(action="accept") |
+| learn_sync_apply | cm_learn(action="apply") |

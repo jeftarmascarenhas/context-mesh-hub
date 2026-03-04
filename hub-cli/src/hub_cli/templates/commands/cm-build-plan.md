@@ -21,8 +21,23 @@ You **MUST** consider the user input before proceeding (if not empty).
 
 The text the user typed after `/cm-build-plan` is likely the feature name — use it.
 
-**If Context Mesh Hub MCP is available:** Call the MCP tool `build_plan` with the feature name. If the user didn't specify a feature, list features (e.g. via `cm_list_features`) and ask which one, or use the feature they mentioned after the command.
+**If Context Mesh Hub MCP is available:** Call the MCP tool:
 
-**If MCP is not available:** Load @context/.context-mesh-framework.md, @context/intent/feature-[name].md, and @context/decisions/*.md for that feature. Produce a step-by-step implementation plan: files to create/modify, order of work, constraints from decisions, and acceptance criteria. Do not write code yet — present the plan and ask for approval (Plan, Approve, Execute).
+```
+cm_build(action="plan", feature_name="<feature-name>")
+```
+
+If the user didn't specify a feature, list features via `cm_intent(action="list", type="feature")` and ask which one, or use the feature they mentioned after the command.
+
+**If MCP is not available:** Load @context/.context-mesh-framework.md, @context/intent/F###-[name].md, and @context/decisions/*.md for that feature. Produce a step-by-step implementation plan: files to create/modify, order of work, constraints from decisions, and acceptance criteria. Do not write code yet — present the plan and ask for approval (Plan, Approve, Execute).
 
 Report completion with the plan summary and suggested next step (e.g. `/cm-build` to approve and execute).
+
+## MCP Tool Reference (D013 Consolidated)
+
+| Old Tool | New Tool Call |
+|----------|---------------|
+| build_plan | cm_build(action="plan") |
+| build_approve | cm_build(action="approve") |
+| build_execute | cm_build(action="execute") |
+| context_bundle | cm_build(action="bundle") |

@@ -6,6 +6,11 @@ Commands for the Intent phase of the workflow:
 - /intent fix-bug      - Document a bug fix
 - /intent update       - Update an existing feature
 - /intent create-agent - Create a reusable agent
+
+Updated for MCP Simplification (D013): Uses consolidated tools.
+- cm_init(action="new|existing|migrate")
+- cm_intent(action="create|update|get|list|delete", type="feature|decision|bug")
+- cm_agent(action="create|update|get|list|delete")
 """
 
 import asyncio

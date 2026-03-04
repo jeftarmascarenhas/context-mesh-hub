@@ -1,114 +1,62 @@
-"""Learn Sync: Explicit learning and context evolution."""
+"""Learn Service - Learning Sync workflow.
 
+Pure business logic for Learn Sync: explicit learning and context evolution.
+Delegates I/O to infrastructure layer (persistence).
+"""
+
+import uuid
 import re
-from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional
 
-from .loader import ContextLoader
-
-
-class LearningArtifactType(Enum):
-    """Types of learning artifacts per Decision 008."""
-    DECISION_UPDATE = "decision_update"
-    PATTERN = "pattern"
-    ANTI_PATTERN = "anti_pattern"
-    CONSTRAINT_DISCOVERY = "constraint_discovery"
-    RISK_ANNOTATION = "risk_annotation"
-    EVOLUTION_NOTE = "evolution_note"
-
-
-class ConfidenceLevel(Enum):
-    """Confidence level for learning artifacts."""
-    HIGH = "high"
-    MEDIUM = "medium"
-    LOW = "low"
+from ...loader import ContextLoader
+from ...infrastructure.persistence.proposal_repository import ProposalRepository
+from ...infrastructure.parsers.markdown_parser import MarkdownParser
+from ...shared.errors import ArtifactNotFoundError
+from ..models.learn import (
+    LearningArtifactType,
+    ConfidenceLevel,
+    ImpactLevel,
+    OutcomeSummary,
+    LearningDraft,
+    ContextUpdateProposal,
+    ChangelogEntryProposal,
+    LearningProposal,
+)
 
 
-class ImpactLevel(Enum):
-    """Impact level for learning artifacts."""
-    HIGH = "high"
-    MEDIUM = "medium"
-    LOW = "low"
-
-
-@dataclass
-class OutcomeSummary:
-    """Summary of execution outcomes."""
-    what_implemented: List[str] = field(default_factory=list)
-    what_failed: List[str] = field(default_factory=list)
-    unexpected_difficulties: List[str] = field(default_factory=list)
-    wrong_assumptions: List[str] = field(default_factory=list)
-    discovered_constraints: List[str] = field(default_factory=list)
-    evidence_files: List[str] = field(default_factory=list)
-    evidence_logs: List[str] = field(default_factory=list)
-    unknowns: List[str] = field(default_factory=list)
-
-
-@dataclass
-class LearningDraft:
-    """A proposed learning artifact."""
-    learning_id: str
-    artifact_type: LearningArtifactType
-    title: str
-    context: str
-    evidence: List[str]
-    recommendation: str
-    related_intents: List[str] = field(default_factory=list)
-    related_decisions: List[str] = field(default_factory=list)
-    confidence: ConfidenceLevel = ConfidenceLevel.MEDIUM
-    impact: ImpactLevel = ImpactLevel.MEDIUM
-    status: str = "Proposed"
-    target_artifact: Optional[str] = None  # For decision updates, pattern names, etc.
-
-
-@dataclass
-class ContextUpdateProposal:
-    """Proposed update to a context artifact."""
-    artifact_type: str  # "feature_intent", "decision", "pattern", "anti_pattern"
-    artifact_path: str
-    update_type: str  # "add_implementation_notes", "add_outcomes", "supersede", etc.
-    proposed_content: str
-    rationale: str
-    status: str = "Proposed"
-
-
-@dataclass
-class ChangelogEntryProposal:
-    """Proposed changelog entry."""
-    date: str
-    what_changed: str
-    why_changed: str
-    related_features: List[str] = field(default_factory=list)
-    related_decisions: List[str] = field(default_factory=list)
-    learning_artifacts: List[str] = field(default_factory=list)
-    status: str = "Proposed"
-
-
-@dataclass
-class LearningProposal:
-    """Complete learning proposal package."""
-    proposal_id: str
-    feature_name: str
-    created_at: str
-    outcome_summary: OutcomeSummary
-    learning_drafts: List[LearningDraft] = field(default_factory=list)
-    context_updates: List[ContextUpdateProposal] = field(default_factory=list)
-    changelog_entry: Optional[ChangelogEntryProposal] = None
-
-
-class LearnSync:
-    """Learn Sync implementation for explicit learning and context evolution."""
+class LearnService:
+    """Service for Learn Sync workflow.
     
-    def __init__(self, loader: ContextLoader):
-        """Initialize Learn Sync.
+    Handles:
+    - Outcome collection from feature execution
+    - Learning classification (patterns, anti-patterns, constraints, etc.)
+    - Context update proposals (feature intents, decisions, patterns)
+    - Changelog entry generation
+    
+    All proposals are persisted via ProposalRepository.
+    """
+    
+    def __init__(
+        self,
+        loader: ContextLoader,
+        proposal_repository: ProposalRepository,
+        parser: MarkdownParser,
+    ):
+        """Initialize learn service with dependencies.
         
         Args:
-            loader: ContextLoader instance.
+            loader: ContextLoader for accessing artifacts
+            proposal_repository: ProposalRepository for persisting proposals
+            parser: MarkdownParser for extracting markdown sections
         """
         self.loader = loader
-        self._proposals: Dict[str, LearningProposal] = {}
+        self.proposal_repo = proposal_repository
+        self.parser = parser
+    
+    # ========================================================================
+    # OUTCOME COLLECTION
+    # ========================================================================
     
     def collect_outcomes(
         self,
@@ -117,29 +65,27 @@ class LearnSync:
         changed_files: Optional[List[str]] = None,
         test_results: Optional[str] = None,
         execution_transcript: Optional[str] = None,
-        user_feedback: Optional[str] = None
+        user_feedback: Optional[str] = None,
     ) -> OutcomeSummary:
         """Collect execution outcomes from build.
         
         Args:
-            feature_name: Name of the feature that was executed.
-            build_plan_id: Optional build plan ID.
-            changed_files: Optional list of changed file paths.
-            test_results: Optional test results summary.
-            execution_transcript: Optional execution transcript.
-            user_feedback: Optional user-provided feedback.
-            
+            feature_name: Feature ID or name
+            build_plan_id: Optional build plan ID
+            changed_files: List of changed file paths
+            test_results: Test results summary
+            execution_transcript: Execution transcript
+            user_feedback: User-provided feedback
+        
         Returns:
-            OutcomeSummary instance.
+            OutcomeSummary instance
         """
         summary = OutcomeSummary()
         
         # Collect from changed files
         if changed_files:
             summary.evidence_files = changed_files
-            summary.what_implemented.append(
-                f"Modified {len(changed_files)} file(s)"
-            )
+            summary.what_implemented.append(f"Modified {len(changed_files)} file(s)")
         
         # Collect from test results
         if test_results:
@@ -152,7 +98,6 @@ class LearnSync:
         # Collect from execution transcript
         if execution_transcript:
             summary.evidence_logs.append("Execution transcript provided")
-            # Simple extraction (can be enhanced)
             if "error" in execution_transcript.lower():
                 summary.what_failed.append("Errors encountered during execution")
             if "unexpected" in execution_transcript.lower():
@@ -162,22 +107,7 @@ class LearnSync:
         
         # Collect from user feedback
         if user_feedback:
-            # Parse user feedback for outcomes
-            lines = user_feedback.split("\n")
-            for line in lines:
-                line = line.strip()
-                if line.startswith("-") or line.startswith("*"):
-                    line = line[1:].strip()
-                    if "failed" in line.lower() or "error" in line.lower():
-                        summary.what_failed.append(line)
-                    elif "difficult" in line.lower() or "hard" in line.lower():
-                        summary.unexpected_difficulties.append(line)
-                    elif "assumption" in line.lower() or "wrong" in line.lower():
-                        summary.wrong_assumptions.append(line)
-                    elif "constraint" in line.lower():
-                        summary.discovered_constraints.append(line)
-                    else:
-                        summary.what_implemented.append(line)
+            self._parse_user_feedback(user_feedback, summary)
         
         # If no evidence provided, mark as unknown
         if not (changed_files or test_results or execution_transcript or user_feedback):
@@ -188,19 +118,47 @@ class LearnSync:
         
         return summary
     
+    def _parse_user_feedback(self, user_feedback: str, summary: OutcomeSummary) -> None:
+        """Parse user feedback into outcome categories.
+        
+        Args:
+            user_feedback: User feedback text
+            summary: OutcomeSummary to populate
+        """
+        lines = user_feedback.split("\n")
+        for line in lines:
+            line = line.strip()
+            if line.startswith("-") or line.startswith("*"):
+                line = line[1:].strip()
+                
+                if "failed" in line.lower() or "error" in line.lower():
+                    summary.what_failed.append(line)
+                elif "difficult" in line.lower() or "hard" in line.lower():
+                    summary.unexpected_difficulties.append(line)
+                elif "assumption" in line.lower() or "wrong" in line.lower():
+                    summary.wrong_assumptions.append(line)
+                elif "constraint" in line.lower():
+                    summary.discovered_constraints.append(line)
+                else:
+                    summary.what_implemented.append(line)
+    
+    # ========================================================================
+    # LEARNING CLASSIFICATION
+    # ========================================================================
+    
     def classify_learnings(
         self,
         outcome_summary: OutcomeSummary,
-        feature_name: str
+        feature_name: str,
     ) -> List[LearningDraft]:
         """Classify outcomes into learning artifacts.
         
         Args:
-            outcome_summary: OutcomeSummary instance.
-            feature_name: Name of the feature.
-            
+            outcome_summary: OutcomeSummary instance
+            feature_name: Feature ID or name
+        
         Returns:
-            List of LearningDraft instances.
+            List of LearningDraft instances
         """
         drafts = []
         learning_counter = 0
@@ -209,7 +167,7 @@ class LearnSync:
         feature = self.loader.get_feature_intent(feature_name)
         related_decisions = []
         if feature:
-            related_decisions = self._extract_decision_links(feature["content"])
+            related_decisions = self.parser.extract_decision_links(feature["content"])
         
         # Classify failures as anti-patterns or risk annotations
         for failure in outcome_summary.what_failed:
@@ -224,7 +182,7 @@ class LearnSync:
                 related_intents=[feature_name],
                 related_decisions=related_decisions,
                 confidence=ConfidenceLevel.HIGH,
-                impact=ImpactLevel.MEDIUM
+                impact=ImpactLevel.MEDIUM,
             ))
         
         # Classify unexpected difficulties as constraints or risks
@@ -240,7 +198,7 @@ class LearnSync:
                 related_intents=[feature_name],
                 related_decisions=related_decisions,
                 confidence=ConfidenceLevel.MEDIUM,
-                impact=ImpactLevel.MEDIUM
+                impact=ImpactLevel.MEDIUM,
             ))
         
         # Classify wrong assumptions as decision updates or evolution notes
@@ -256,7 +214,7 @@ class LearnSync:
                 related_intents=[feature_name],
                 related_decisions=related_decisions,
                 confidence=ConfidenceLevel.HIGH,
-                impact=ImpactLevel.HIGH
+                impact=ImpactLevel.HIGH,
             ))
         
         # Classify discovered constraints
@@ -272,63 +230,68 @@ class LearnSync:
                 related_intents=[feature_name],
                 related_decisions=related_decisions,
                 confidence=ConfidenceLevel.HIGH,
-                impact=ImpactLevel.MEDIUM
+                impact=ImpactLevel.MEDIUM,
             ))
         
         # Classify successful implementations as patterns (if significant)
-        if outcome_summary.what_implemented and len(outcome_summary.what_implemented) > 0:
-            # Only create pattern if there's substantial implementation
-            if len(outcome_summary.what_implemented) >= 3 or any(
-                "pattern" in impl.lower() or "approach" in impl.lower()
-                for impl in outcome_summary.what_implemented
-            ):
-                learning_counter += 1
-                drafts.append(LearningDraft(
-                    learning_id=f"learning-{learning_counter}",
-                    artifact_type=LearningArtifactType.PATTERN,
-                    title=f"Implementation Pattern: {feature_name}",
-                    context=f"Successful implementation approach for {feature_name}.",
-                    evidence=outcome_summary.evidence_files + outcome_summary.evidence_logs,
-                    recommendation="Consider reusing this approach for similar features.",
-                    related_intents=[feature_name],
-                    related_decisions=related_decisions,
-                    confidence=ConfidenceLevel.MEDIUM,
-                    impact=ImpactLevel.LOW
-                ))
+        if self._is_significant_implementation(outcome_summary):
+            learning_counter += 1
+            drafts.append(LearningDraft(
+                learning_id=f"learning-{learning_counter}",
+                artifact_type=LearningArtifactType.PATTERN,
+                title=f"Implementation Pattern: {feature_name}",
+                context=f"Successful implementation approach for {feature_name}.",
+                evidence=outcome_summary.evidence_files + outcome_summary.evidence_logs,
+                recommendation="Consider reusing this approach for similar features.",
+                related_intents=[feature_name],
+                related_decisions=related_decisions,
+                confidence=ConfidenceLevel.MEDIUM,
+                impact=ImpactLevel.LOW,
+            ))
         
         return drafts
     
-    def generate_learning_drafts(
-        self,
-        outcome_summary: OutcomeSummary,
-        feature_name: str
-    ) -> List[LearningDraft]:
-        """Generate learning drafts from outcomes.
+    def _is_significant_implementation(self, outcome_summary: OutcomeSummary) -> bool:
+        """Check if implementation is significant enough for pattern creation.
         
         Args:
-            outcome_summary: OutcomeSummary instance.
-            feature_name: Name of the feature.
-            
+            outcome_summary: OutcomeSummary instance
+        
         Returns:
-            List of LearningDraft instances.
+            True if significant, False otherwise
         """
-        return self.classify_learnings(outcome_summary, feature_name)
+        if not outcome_summary.what_implemented:
+            return False
+        
+        # Significant if 3+ items implemented
+        if len(outcome_summary.what_implemented) >= 3:
+            return True
+        
+        # Significant if mentions pattern/approach
+        return any(
+            "pattern" in impl.lower() or "approach" in impl.lower()
+            for impl in outcome_summary.what_implemented
+        )
+    
+    # ========================================================================
+    # CONTEXT UPDATE PROPOSALS
+    # ========================================================================
     
     def propose_context_updates(
         self,
         outcome_summary: OutcomeSummary,
         learning_drafts: List[LearningDraft],
-        feature_name: str
+        feature_name: str,
     ) -> List[ContextUpdateProposal]:
         """Propose updates to context artifacts.
         
         Args:
-            outcome_summary: OutcomeSummary instance.
-            learning_drafts: List of LearningDraft instances.
-            feature_name: Name of the feature.
-            
+            outcome_summary: OutcomeSummary instance
+            learning_drafts: List of LearningDraft instances
+            feature_name: Feature ID or name
+        
         Returns:
-            List of ContextUpdateProposal instances.
+            List of ContextUpdateProposal instances
         """
         proposals = []
         
@@ -337,26 +300,15 @@ class LearnSync:
         if not feature:
             return proposals
         
-        # Propose feature intent updates
-        implementation_notes = []
-        if outcome_summary.what_implemented:
-            implementation_notes.append("## Implementation Notes\n")
-            implementation_notes.append("### What Was Implemented\n")
-            for item in outcome_summary.what_implemented:
-                implementation_notes.append(f"- {item}\n")
-        
-        if outcome_summary.unexpected_difficulties or outcome_summary.discovered_constraints:
-            implementation_notes.append("\n### Limitations / Edge Cases\n")
-            for item in outcome_summary.unexpected_difficulties + outcome_summary.discovered_constraints:
-                implementation_notes.append(f"- {item}\n")
-        
+        # Propose feature intent updates (implementation notes)
+        implementation_notes = self._build_implementation_notes(outcome_summary)
         if implementation_notes:
             proposals.append(ContextUpdateProposal(
                 artifact_type="feature_intent",
                 artifact_path=feature["path"],
                 update_type="add_implementation_notes",
-                proposed_content="".join(implementation_notes),
-                rationale="Capture implementation outcomes and discovered limitations."
+                proposed_content=implementation_notes,
+                rationale="Capture implementation outcomes and discovered limitations.",
             ))
         
         # Propose decision updates (for decision update learnings)
@@ -371,35 +323,66 @@ class LearnSync:
                     artifact_type="decision",
                     artifact_path=f"context/decisions/{decision_num}-*.md",
                     update_type="add_outcomes",
-                    proposed_content=f"## Outcomes\n\n{draft.recommendation}\n\n**Evidence**: {', '.join(draft.evidence[:3])}\n",
-                    rationale=f"Learning from {feature_name} execution: {draft.title}"
+                    proposed_content=(
+                        f"## Outcomes\n\n{draft.recommendation}\n\n"
+                        f"**Evidence**: {', '.join(draft.evidence[:3])}\n"
+                    ),
+                    rationale=f"Learning from {feature_name} execution: {draft.title}",
                 ))
         
         return proposals
+    
+    def _build_implementation_notes(self, outcome_summary: OutcomeSummary) -> str:
+        """Build implementation notes section from outcomes.
+        
+        Args:
+            outcome_summary: OutcomeSummary instance
+        
+        Returns:
+            Markdown string with implementation notes
+        """
+        notes = []
+        
+        if outcome_summary.what_implemented:
+            notes.append("## Implementation Notes\n")
+            notes.append("### What Was Implemented\n")
+            for item in outcome_summary.what_implemented:
+                notes.append(f"- {item}\n")
+        
+        if outcome_summary.unexpected_difficulties or outcome_summary.discovered_constraints:
+            notes.append("\n### Limitations / Edge Cases\n")
+            for item in outcome_summary.unexpected_difficulties + outcome_summary.discovered_constraints:
+                notes.append(f"- {item}\n")
+        
+        return "".join(notes)
+    
+    # ========================================================================
+    # CHANGELOG PROPOSALS
+    # ========================================================================
     
     def propose_changelog_entry(
         self,
         feature_name: str,
         outcome_summary: OutcomeSummary,
         learning_drafts: List[LearningDraft],
-        context_updates: List[ContextUpdateProposal]
+        context_updates: List[ContextUpdateProposal],
     ) -> ChangelogEntryProposal:
         """Propose changelog entry.
         
         Args:
-            feature_name: Name of the feature.
-            outcome_summary: OutcomeSummary instance.
-            learning_drafts: List of LearningDraft instances.
-            context_updates: List of ContextUpdateProposal instances.
-            
+            feature_name: Feature ID or name
+            outcome_summary: OutcomeSummary instance
+            learning_drafts: List of LearningDraft instances
+            context_updates: List of ContextUpdateProposal instances
+        
         Returns:
-            ChangelogEntryProposal instance.
+            ChangelogEntryProposal instance
         """
         # Get related decisions
         feature = self.loader.get_feature_intent(feature_name)
         related_decisions = []
         if feature:
-            related_decisions = self._extract_decision_links(feature["content"])
+            related_decisions = self.parser.extract_decision_links(feature["content"])
         
         # Build what changed
         what_changed = []
@@ -422,12 +405,18 @@ class LearnSync:
         
         return ChangelogEntryProposal(
             date=datetime.now().strftime("%Y-%m-%d"),
-            what_changed="; ".join(what_changed) if what_changed else f"Learn Sync for {feature_name}",
+            what_changed=(
+                "; ".join(what_changed) if what_changed else f"Learn Sync for {feature_name}"
+            ),
             why_changed=why_changed.strip(),
             related_features=[feature_name],
             related_decisions=related_decisions,
-            learning_artifacts=learning_artifact_ids
+            learning_artifacts=learning_artifact_ids,
         )
+    
+    # ========================================================================
+    # LEARN SYNC WORKFLOW
+    # ========================================================================
     
     def initiate_learn_sync(
         self,
@@ -435,33 +424,31 @@ class LearnSync:
         changed_files: Optional[List[str]] = None,
         test_results: Optional[str] = None,
         execution_transcript: Optional[str] = None,
-        user_feedback: Optional[str] = None
+        user_feedback: Optional[str] = None,
     ) -> LearningProposal:
         """Initiate learn sync for a feature.
         
         Args:
-            feature_name: Name of the feature.
-            changed_files: Optional list of changed file paths.
-            test_results: Optional test results summary.
-            execution_transcript: Optional execution transcript.
-            user_feedback: Optional user-provided feedback.
-            
-        Returns:
-            LearningProposal instance.
-        """
-        import uuid
+            feature_name: Feature ID or name
+            changed_files: List of changed file paths
+            test_results: Test results summary
+            execution_transcript: Execution transcript
+            user_feedback: User-provided feedback
         
+        Returns:
+            LearningProposal instance
+        """
         # Collect outcomes
         outcome_summary = self.collect_outcomes(
             feature_name=feature_name,
             changed_files=changed_files,
             test_results=test_results,
             execution_transcript=execution_transcript,
-            user_feedback=user_feedback
+            user_feedback=user_feedback,
         )
         
         # Generate learning drafts
-        learning_drafts = self.generate_learning_drafts(outcome_summary, feature_name)
+        learning_drafts = self.classify_learnings(outcome_summary, feature_name)
         
         # Propose context updates
         context_updates = self.propose_context_updates(
@@ -482,33 +469,57 @@ class LearnSync:
             outcome_summary=outcome_summary,
             learning_drafts=learning_drafts,
             context_updates=context_updates,
-            changelog_entry=changelog_entry
+            changelog_entry=changelog_entry,
         )
         
-        self._proposals[proposal_id] = proposal
+        # Persist proposal
+        self.proposal_repo.save_proposal(proposal)
+        
         return proposal
     
-    def get_proposal(self, proposal_id: str) -> Optional[LearningProposal]:
+    def get_proposal(self, proposal_id: str) -> LearningProposal:
         """Get a learning proposal by ID.
         
         Args:
-            proposal_id: Proposal ID.
-            
+            proposal_id: Proposal ID
+        
         Returns:
-            LearningProposal instance or None.
+            LearningProposal instance
+            
+        Raises:
+            ArtifactNotFoundError: If proposal not found
         """
-        return self._proposals.get(proposal_id)
+        proposal = self.proposal_repo.get_proposal(proposal_id)
+        if not proposal:
+            raise ArtifactNotFoundError(
+                f"Learning proposal not found: {proposal_id}",
+                artifact_type="learning_proposal",
+                artifact_name=proposal_id
+            )
+        return proposal
     
-    def _extract_decision_links(self, content: str) -> List[str]:
-        """Extract decision links from content.
+    def list_proposals(self) -> List[LearningProposal]:
+        """List all learning proposals.
+        
+        Returns:
+            List of LearningProposal instances
+        """
+        return self.proposal_repo.list_proposals()
+    
+    def delete_proposal(self, proposal_id: str) -> None:
+        """Delete a learning proposal.
         
         Args:
-            content: Content to extract from.
+            proposal_id: Proposal ID
             
-        Returns:
-            List of decision numbers (e.g., ["001", "002"]).
+        Raises:
+            ArtifactNotFoundError: If proposal not found
         """
-        # Match patterns like [Decision: 001-*](../decisions/001-*.md)
-        pattern = r'\[Decision[^\]]*\]\([^)]*/(\d{3})-[^)]+\)'
-        matches = re.findall(pattern, content)
-        return sorted(set(matches))
+        proposal = self.proposal_repo.get_proposal(proposal_id)
+        if not proposal:
+            raise ArtifactNotFoundError(
+                f"Learning proposal not found: {proposal_id}",
+                artifact_type="learning_proposal",
+                artifact_name=proposal_id
+            )
+        self.proposal_repo.delete_proposal(proposal_id)

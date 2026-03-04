@@ -86,8 +86,23 @@ class ContextLoader:
         # Load feature intents
         intent_dir = self.context_dir / "intent"
         if intent_dir.exists():
+            # Support both old format (feature-*.md) and new format (F###-*.md)
             for file_path in intent_dir.glob("feature-*.md"):
                 feature_name = file_path.stem.replace("feature-", "")
+                self._index["feature_intents"][feature_name] = {
+                    "path": str(file_path.relative_to(self.repo_root)),
+                    "content": file_path.read_text(encoding="utf-8"),
+                }
+            # New format: F001-name.md, F002-name.md, etc.
+            for file_path in intent_dir.glob("F[0-9][0-9][0-9]-*.md"):
+                # Extract full name (F001-name) or just the ID (F001)
+                feature_id = file_path.stem.split("-")[0]  # F001
+                self._index["feature_intents"][feature_id] = {
+                    "path": str(file_path.relative_to(self.repo_root)),
+                    "content": file_path.read_text(encoding="utf-8"),
+                }
+                # Also store with full name for backward compatibility
+                feature_name = file_path.stem  # F001-hub-core
                 self._index["feature_intents"][feature_name] = {
                     "path": str(file_path.relative_to(self.repo_root)),
                     "content": file_path.read_text(encoding="utf-8"),
@@ -97,10 +112,28 @@ class ContextLoader:
         decisions_dir = self.context_dir / "decisions"
         if decisions_dir.exists():
             for file_path in decisions_dir.glob("*.md"):
-                # Extract decision number from filename (e.g., "001-tech-stack.md" -> "001")
-                match = re.match(r"^(\d{3})-", file_path.name)
-                if match:
-                    decision_num = match.group(1)
+                # Support both old format (001-*.md) and new format (D001-*.md)
+                # Old format: 001-tech-stack.md -> "001"
+                match_old = re.match(r"^(\d{3})-", file_path.name)
+                # New format: D001-tech-stack.md -> "D001"
+                match_new = re.match(r"^(D\d{3})-", file_path.name)
+                
+                if match_new:
+                    decision_id = match_new.group(1)  # D001
+                    self._index["decisions"][decision_id] = {
+                        "path": str(file_path.relative_to(self.repo_root)),
+                        "content": file_path.read_text(encoding="utf-8"),
+                        "filename": file_path.name,
+                    }
+                    # Also store without D prefix for backward compatibility
+                    decision_num = decision_id[1:]  # 001
+                    self._index["decisions"][decision_num] = {
+                        "path": str(file_path.relative_to(self.repo_root)),
+                        "content": file_path.read_text(encoding="utf-8"),
+                        "filename": file_path.name,
+                    }
+                elif match_old:
+                    decision_num = match_old.group(1)
                     self._index["decisions"][decision_num] = {
                         "path": str(file_path.relative_to(self.repo_root)),
                         "content": file_path.read_text(encoding="utf-8"),

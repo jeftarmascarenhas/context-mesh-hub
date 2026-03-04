@@ -153,6 +153,7 @@ def run_init_flow():
         "Register project (cm projects add [path])",
         "Get MCP config (cm config)",
         "Install slash commands (cm setup-commands)",
+        "Install Context Mesh Skill (cm skills install)",
         "Run diagnostics",
         "List AI agents",
         "Exit",
@@ -211,6 +212,11 @@ def run_init_flow():
         )
         _do_setup_commands(agent, root)
 
+    elif choice == "Install Context Mesh Skill (cm skills install)":
+        # Import and run skills install
+        from hub_cli.commands.skills import install_skill
+        install_skill(agent=None, target_dir=None, force=False)
+
     elif choice == "Run diagnostics":
         doctor_command()
     elif choice == "List AI agents":
@@ -221,7 +227,7 @@ def run_init_flow():
 
 @app.command()
 def init():
-    """Initialize Context Mesh Hub — interactive setup (register project, MCP config, slash commands, UI, diagnostics).
+    """Initialize Context Mesh Hub — interactive setup (register project, MCP config, slash commands, skills, diagnostics).
 
     Run [bold]cm init[/bold] to open the setup menu. Same as running [bold]cm[/bold] with no arguments.
     """
@@ -414,6 +420,10 @@ def doctor():
 projects_app = typer.Typer(help="Manage registered Context Mesh projects")
 app.add_typer(projects_app, name="projects")
 
+# Skills subcommand group
+from hub_cli.commands.skills import skills_app
+app.add_typer(skills_app, name="skills")
+
 # Slash commands live in agent chat only (Cursor, Copilot, Claude CLI, Gemini CLI).
 # Install with: cm setup-commands. Do not expose /intent, /build, /learn in the CLI.
 
@@ -451,8 +461,7 @@ def projects_list():
         table.add_row(icon, name, str(path), status)
     
     console.print(table)
-    console.print(f"\n[dim]Total: {len(projects)} project(s)[/dim]")
-    console.print("[dim]Run [bold]cm ui[/bold] to view all projects in the dashboard[/dim]\n")
+    console.print(f"\n[dim]Total: {len(projects)} project(s)[/dim]\n")
 
 
 @projects_app.command("add")
@@ -539,6 +548,21 @@ def doctor_command():
     else:
         checks.append(("Registered projects", False, "None (run 'cm init' to register)"))
     
+    # Check for Context Mesh skill
+    repo_root = get_repo_root()
+    skill_paths = [
+        repo_root / ".cursor" / "skills" / "context-mesh" if repo_root else None,
+        repo_root / ".github" / "skills" / "context-mesh" if repo_root else None,
+        repo_root / ".claude" / "skills" / "context-mesh" if repo_root else None,
+    ]
+    skill_paths = [p for p in skill_paths if p is not None]
+    skill_found = any(p.exists() for p in skill_paths)
+    if skill_found:
+        found_path = next(p for p in skill_paths if p.exists())
+        checks.append(("Context Mesh Skill", True, str(found_path.relative_to(repo_root))))
+    else:
+        checks.append(("Context Mesh Skill", False, "Not installed (run 'cm skills install')"))
+    
     # Check for uv
     uv_path = shutil.which("uv")
     if uv_path:
@@ -565,6 +589,66 @@ def doctor_command():
             print_success("All checks passed!")
     else:
         print_error("Some checks failed. Please fix the issues above.")
+
+
+@app.command()
+def status():
+    """Show current project status using Context Mesh MCP."""
+    repo_root = get_repo_root()
+    if not repo_root:
+        print_error("Not in a Context Mesh project")
+        raise typer.Exit(1)
+    
+    client = MCPClient(repo_root)
+    
+    # Try to call cm_status via MCP
+    import asyncio
+    try:
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+    
+    result = loop.run_until_complete(
+        client.call_tool("cm_status", {"repo_root": str(repo_root)})
+    )
+    
+    if result.error:
+        print_error(f"Error: {result.error}")
+        raise typer.Exit(1)
+    
+    # Display status
+    content = result.content
+    console.print("\n[bold]Context Mesh Status[/bold]\n")
+    
+    if isinstance(content, dict):
+        # Show project info
+        if "project" in content:
+            console.print(f"[cyan]Project:[/cyan] {content['project'].get('name', 'Unknown')}")
+        
+        # Show artifact counts
+        if "artifacts" in content:
+            artifacts = content["artifacts"]
+            console.print(f"\n[bold]Artifacts:[/bold]")
+            console.print(f"  Features:  {artifacts.get('features', 0)}")
+            console.print(f"  Decisions: {artifacts.get('decisions', 0)}")
+            console.print(f"  Agents:    {artifacts.get('agents', 0)}")
+        
+        # Show lifecycle
+        if "lifecycle" in content:
+            console.print(f"\n[bold]Lifecycle:[/bold] {content['lifecycle'].get('phase', 'unknown')}")
+        
+        # Show suggestions
+        if "suggestions" in content and content["suggestions"]:
+            console.print(f"\n[bold]Suggestions:[/bold]")
+            for s in content["suggestions"][:3]:
+                if isinstance(s, dict):
+                    desc = s.get("description", s.get("action", str(s)))
+                    console.print(f"  • {desc}")
+                else:
+                    console.print(f"  • {s}")
+    else:
+        console.print(content)
 
 
 if __name__ == "__main__":
