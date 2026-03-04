@@ -150,7 +150,6 @@ def run_init_flow():
     print_divider()
 
     init_choices = [
-        "Register project (cm projects add [path])",
         "Get MCP config (cm config)",
         "Install slash commands (cm setup-commands)",
         "Install Context Mesh Skill (cm skills install)",
@@ -171,19 +170,7 @@ def run_init_flow():
     root = get_repo_root() or Path.cwd()
     root = Path(root).resolve()
 
-    if choice == "Register project (cm projects add [path])":
-        path = Prompt.ask("Project path to register", default=".")
-        project_path = (root / path).resolve() if path != "." else root
-        if not project_path.exists():
-            print_error(f"Path does not exist: {project_path}")
-            raise typer.Exit(1)
-        if register_project(str(project_path)):
-            print_success(f"Project registered: {project_path.name}")
-        else:
-            print_info(f"Project already registered: {project_path.name}")
-        console.print("\n[dim]Next: run [bold]cm config[/bold] or [bold]cm setup-commands[/bold].[/dim]\n")
-
-    elif choice == "Get MCP config (cm config)":
+    if choice == "Get MCP config (cm config)":
         editor_choices = [MCP_EDITORS[k]["name"] for k in MCP_EDITORS]
         editor_display = questionary.select(
             "Which editor?",

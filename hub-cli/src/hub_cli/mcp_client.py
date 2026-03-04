@@ -220,15 +220,40 @@ class MCPClient:
     
     def _find_hub_core_dir(self) -> Optional[Path]:
         """Find hub-core project directory (for uv run)."""
-        # Check multiple locations
+        import os
+        
+        # 1. Check environment variable
+        hub_core_env = os.environ.get("CONTEXT_MESH_HUB_CORE_PATH")
+        if hub_core_env:
+            path = Path(hub_core_env)
+            if path.name == "src" and (path.parent / "pyproject.toml").exists():
+                return path.parent
+            if (path / "pyproject.toml").exists():
+                return path
+        
+        # 2. Check uv git cache (where uv tool install clones repos)
+        uv_git_cache = Path.home() / ".cache" / "uv" / "git-v0" / "checkouts"
+        if uv_git_cache.exists():
+            for repo_dir in uv_git_cache.iterdir():
+                if "context-mesh-hub" in repo_dir.name.lower():
+                    for checkout in repo_dir.iterdir():
+                        hub_core = checkout / "hub-core"
+                        if (hub_core / "pyproject.toml").exists():
+                            return hub_core
+        
+        # 3. Check local development (same level or parent)
         candidates = [
             self.repo_root / "hub-core",  # Same level (inside hub/)
             self.repo_root.parent / "hub-core",  # Parent level (sibling)
             Path.home() / "Jeftar" / "hub" / "hub-core",  # Known location
+            Path.home() / "projects" / "context-mesh-hub" / "hub-core",
+            Path.home() / "dev" / "context-mesh-hub" / "hub-core",
         ]
+        
         for path in candidates:
             if (path / "pyproject.toml").exists():
                 return path
+        
         return None
     
     async def _call_tool_direct(self, tool_name: str, arguments: dict[str, Any]) -> MCPToolResult:
