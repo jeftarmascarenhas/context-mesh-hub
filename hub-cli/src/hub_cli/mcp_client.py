@@ -221,6 +221,7 @@ class MCPClient:
     def _find_hub_core_dir(self) -> Optional[Path]:
         """Find hub-core project directory (for uv run)."""
         import os
+        import platform
         
         # 1. Check environment variable
         hub_core_env = os.environ.get("CONTEXT_MESH_HUB_CORE_PATH")
@@ -232,23 +233,40 @@ class MCPClient:
                 return path
         
         # 2. Check uv git cache (where uv tool install clones repos)
-        uv_git_cache = Path.home() / ".cache" / "uv" / "git-v0" / "checkouts"
-        if uv_git_cache.exists():
-            for repo_dir in uv_git_cache.iterdir():
-                if "context-mesh-hub" in repo_dir.name.lower():
-                    for checkout in repo_dir.iterdir():
-                        hub_core = checkout / "hub-core"
-                        if (hub_core / "pyproject.toml").exists():
-                            return hub_core
+        # Windows: %LOCALAPPDATA%\uv\cache\git-v0\checkouts
+        # macOS/Linux: ~/.cache/uv/git-v0/checkouts
+        uv_cache_paths = []
+        if platform.system() == "Windows":
+            local_app_data = os.environ.get("LOCALAPPDATA")
+            if local_app_data:
+                uv_cache_paths.append(Path(local_app_data) / "uv" / "cache" / "git-v0" / "checkouts")
+            uv_cache_paths.append(Path.home() / "AppData" / "Local" / "uv" / "cache" / "git-v0" / "checkouts")
+        else:
+            uv_cache_paths.append(Path.home() / ".cache" / "uv" / "git-v0" / "checkouts")
         
-        # 3. Check local development (same level or parent)
+        for uv_git_cache in uv_cache_paths:
+            if uv_git_cache.exists():
+                try:
+                    for repo_dir in uv_git_cache.iterdir():
+                        if "context-mesh-hub" in repo_dir.name.lower():
+                            for checkout in repo_dir.iterdir():
+                                hub_core = checkout / "hub-core"
+                                if (hub_core / "pyproject.toml").exists():
+                                    return hub_core
+                except (PermissionError, OSError):
+                    continue
+        
+        # 3. Check local development paths
         candidates = [
-            self.repo_root / "hub-core",  # Same level (inside hub/)
-            self.repo_root.parent / "hub-core",  # Parent level (sibling)
-            Path.home() / "Jeftar" / "hub" / "hub-core",  # Known location
+            self.repo_root / "hub-core",
+            self.repo_root.parent / "hub-core",
             Path.home() / "projects" / "context-mesh-hub" / "hub-core",
             Path.home() / "dev" / "context-mesh-hub" / "hub-core",
         ]
+        
+        # Windows-specific paths
+        if platform.system() == "Windows":
+            candidates.append(Path.home() / "source" / "repos" / "context-mesh-hub" / "hub-core")
         
         for path in candidates:
             if (path / "pyproject.toml").exists():
