@@ -120,6 +120,33 @@ All evolution is:
 
 ---
 
+### Learning Proposals (JSON in `.context-mesh/`)
+
+**Nature:**
+- Transitional artifacts stored in `.context-mesh/proposals/`
+- Not versioned (excluded via `.gitignore`)
+- Serve as staging area before materialization into `context/`
+
+**Lifecycle:**
+1. **Created** by `learn_sync_initiate()` after feature execution
+2. **Reviewed** by human (via `learn_sync_review()`)
+3. **Applied** via `learn_sync_apply()` - materializes learnings to `context/knowledge/`
+4. **Deleted** after successful materialization
+
+**Retention Policy:**
+- ✅ **Delete proposals after learnings fully applied to context/**
+- Proposals are transitional only - once materialized, they have no authoritative value
+- Optional: Keep for audit trail (project-specific, typically 30 days max)
+- Vazia or failed proposals can be deleted immediately
+
+**Rationale:**
+- Proposals are drafts, not authoritative artifacts
+- Materialized learnings in `context/knowledge/` are the source of truth
+- Keeping proposals long-term creates unnecessary transitional state
+- Changelog already captures "what was learned and when"
+
+---
+
 ### Evolution (Changelog)
 
 **Required for All Evolution:**

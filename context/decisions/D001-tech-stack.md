@@ -110,13 +110,44 @@ All context artifacts live under the `context/` directory and are versioned usin
 - Requires discipline in context management
 - UI depends on MCP cooperation rather than direct file access
 
+## Outcomes
+
+### Implementation: F006 Hub-Core Refactoring (2026-03-04)
+
+**What Was Implemented:**
+- Complete 3-layer architecture (Domain/Infrastructure/MCP) as specified in this decision
+- 28 new files replacing 4 monolithic files (3,673 lines removed, ~6,000 lines of structured code added)
+- Dependency Injection throughout domain services
+- File-based persistence in `.context-mesh/` (no database needed for v1 ✅)
+- Zero breaking changes to MCP interface
+
+**Learnings:**
+- ✅ **3-layer architecture validated** - Clear separation of concerns dramatically improved maintainability
+- ✅ **DI pattern successful** - Constructor-based DI made services testable with mocks
+- ✅ **File-based persistence sufficient** - JSON storage in `.context-mesh/` works well for plans/proposals
+- ✅ **Phased approach critical** - 5 phases allowed incremental validation without breaking production
+- ⚠️ **Python relative imports tricky** - Deep nesting (`mcp/tools/*.py`) caused import path confusion (see [Anti-Pattern](../knowledge/anti-patterns/python-relative-imports-pitfall.md))
+- ⚠️ **Context Mesh workflow must be followed** - Initially violated workflow by creating REFACTORING_PLAN.md outside Context Mesh structure; corrected by creating proper feature intent F006
+
+**Evidence:**
+- Feature: [F006 - Refactor Hub-Core Architecture](../intent/F006-refactor-hub-core-architecture.md)
+- Pattern: [Phased Refactoring with DI](../knowledge/patterns/phased-refactoring-with-di.md)
+- Learn Sync: proposal ed8afea3-4901-4041-a79a-108d2e764259
+
+**Recommendation:**
+Continue this architectural approach for other components (CLI, UI). The 3-layer pattern with DI and file-based persistence proved highly effective.
+
+---
+
 ## Related
 
 - [Project Intent](../intent/project-intent.md)
 - [Feature: Hub Core](../intent/feature-hub-core.md)
 - [Feature: Hub CLI](../intent/feature-hub-cli.md)
+- [Feature: F006 - Refactor Hub-Core Architecture](../intent/F006-refactor-hub-core-architecture.md)
 
 ## Status
 
 - **Created**: 2026-01-26
+- **Updated**: 2026-03-04 (added outcomes from F006)
 - **Status**: Accepted

@@ -4,6 +4,165 @@ This changelog records what changed in the Context Mesh Hub project, why it chan
 
 ---
 
+## 2026-03-04 - Hub-Core Architecture Refactoring Completed (F006)
+
+**What Changed:**
+- Completed 5-phase refactoring of hub-core from 5,034 lines (73% problematic) to clean 3-layer architecture
+- Created 28 new files totaling ~6,000 lines of well-structured, testable code
+- Removed 4 legacy files totaling 3,673 lines (tools.py, brownfield.py, build_protocol.py, learn_sync.py)
+- Implemented file-based persistence for BuildPlans and LearningProposals in `.context-mesh/`
+- Achieved zero breaking changes - all MCP tools maintain exact same interface
+- Updated test_learn_sync.py to use new LearnService architecture
+
+**Implementation Timeline:**
+- **Phase 1 (Foundation)**: Created `shared/`, `domain/models/` with custom exceptions and dataclasses
+- **Phase 2 (Infrastructure)**: Built 12 files including parsers, persistence, and scanner modules
+- **Phase 3 (Domain Services)**: Created 4 services (Intent, Build, Analysis, Learn) totaling 2,063 lines
+- **Phase 4 (MCP Tools)**: Split tools.py into 8 focused files + decorators for error handling
+- **Phase 5 (Cleanup)**: Removed legacy code, fixed imports, updated server.py with DI
+
+**Outcomes:**
+- ✅ **Maintainability**: All files now <650 lines (largest: intent_service.py at 645 lines)
+- ✅ **Architecture**: Clear separation of Domain/Infrastructure/MCP layers
+- ✅ **Persistence**: BuildPlans and LearningProposals survive server restarts
+- ✅ **Testability**: Domain services are pure functions, easy to test with mocks
+- ✅ **Error Handling**: Consistent custom exceptions throughout codebase
+- ✅ **Dependency Injection**: All services receive dependencies via constructor
+- ⏳ **Test Coverage**: Basic tests updated, comprehensive 70%+ coverage pending (Phase 6)
+
+**Technical Details:**
+- Domain: `intent_service.py` (645), `build_service.py` (469), `analysis_service.py` (388), `learn_service.py` (561)
+- Infrastructure: 12 files across parsers/, persistence/, scanner/ (~1,427 lines)
+- MCP: 8 tools + decorators.py, server.py (229 lines with DI setup)
+- Shared: errors.py (7 custom exceptions), config.py, utils.py
+
+**Learnings:**
+- Phased approach allowed incremental validation without breaking existing functionality
+- DI pattern dramatically improved testability - services can now be tested in isolation
+- File-based persistence is sufficient for v1 (no database needed)
+- Splitting tools.py into focused files revealed hidden coupling and duplication
+- Import path issues (... vs ..) caused initial syntax errors - resolved systematically
+
+**Process Violation (Meta-learning):**
+- ⚠️ Initially created `REFACTORING_PLAN.md` outside Context Mesh structure
+- Corrected by creating proper feature intent `F006-refactor-hub-core-architecture.md`
+- Lesson: Even when building Context Mesh Hub, FOLLOW Context Mesh (Intent → Build → Learn)
+
+**Related:**
+- Feature: [F006 - Refactor Hub-Core Architecture](../intent/F006-refactor-hub-core-architecture.md)
+- Decision: [D001 - Tech Stack](../decisions/D001-tech-stack.md)
+- Feature: [F004 - Hub Core](../intent/F004-hub-core.md)
+
+**Next Steps:**
+- Complete Phase 6: Comprehensive test suite with 70%+ coverage
+- Create ARCHITECTURE.md documenting layer responsibilities
+- Use learn_sync MCP to formalize additional learnings
+
+---
+
+## 2026-03-03 - Hub-Core Architecture Refactoring Analysis (D001)
+
+**What Changed:**
+- Comprehensive analysis of hub-core identified critical code smells and architectural issues
+- Created Decision D001 documenting complete refactoring strategy with 3-layer architecture
+- Documented all problems: God Objects, in-memory state, coupling, parsing duplication
+
+**Why:**
+- Current hub-core violates FastMCP best practices and software engineering principles
+- tools.py with 2047 lines is unmaintainable (God Object)
+- build_protocol.py and learn_sync.py lose state on restart (no persistence)
+- brownfield.py with 665 lines mixes multiple responsibilities
+- Lack of tests (~10% coverage), difficult to maintain and evolve
+
+**Related:**
+- Decision: D001
+- Feature: F006 (created retroactively on 2026-03-04)
+
+**Next Steps:**
+- Execute refactoring (completed 2026-03-04)
+
+---
+
+## 2026-03-03 - Brownfield Extraction Artifact Classification Fix (D014)
+
+**What Changed:**
+- Refactored `hub-core/src/hub_core/brownfield.py` to correctly classify artifacts per Context Mesh 1.1.0
+- Removed automatic "Feature Intent" generation for entry points (main.py, server.py, etc.)
+- Changed structural analysis to propose "Decisions" about architecture instead of "Features"
+- Focused intent reconstruction on value-delivering capabilities, not implementation files
+
+**Why:**
+- Previous implementation violated Context Mesh 1.1.0 principles
+- Was generating dozens of meaningless "Feature: main" proposals
+- Confused "WHAT provides value" (Features) with "HOW it's implemented" (Decisions)
+- Created noise that made brownfield extraction unusable
+
+**Technical Details:**
+- `_extract_structural_discovery()` now creates "decision" artifacts about architecture
+- `_extract_intent_reconstruction()` no longer creates features for entry points
+- Features should only be proposed for user/system-facing capabilities
+- Decisions proposed for tech stack, frameworks, dependency management, build tools
+
+**Correct Classification:**
+- **Features**: User Authentication, Todo CRUD, Build Protocol (value to users/system)
+- **Decisions**: Tech Stack, Framework Choice, Database Selection (technical choices)
+- **Patterns**: API design, error handling approaches (reusable code patterns)
+- **Knowledge**: Domain rules, constraints, integration requirements
+
+**Related:**
+- [Decision: D014 Brownfield Extraction Artifact Classification](../decisions/D014-brownfield-extraction-artifact-classification.md)
+- [Decision: D005 Brownfield Context Extraction](../decisions/D005-brownfield-context-extraction.md)
+- [Decision: D013 MCP Simplification](../decisions/D013-mcp-simplification.md)
+- [Feature: Hub Brownfield](../intent/F001-hub-brownfield.md)
+
+---
+
+## 2026-03-03 - MCP Simplification (D013)
+
+**What Changed:**
+- Refactored MCP from 43 tools to 8 consolidated tools:
+  - `cm_init` - Project initialization (new, existing, migrate)
+  - `cm_intent` - Intent management (features, decisions, bugs)
+  - `cm_agent` - Agent management (CRUD operations)
+  - `cm_build` - Build protocol (bundle, plan, approve, execute)
+  - `cm_validate` - Context validation
+  - `cm_analyze` - Brownfield analysis (scan, slice, extract, report)
+  - `cm_learn` - Learning sync (initiate, review, accept, apply)
+  - `cm_status` - Complete project status
+
+- Created Context Mesh Skill (`.github/skills/context-mesh/`):
+  - SKILL.md with pushy description for better triggering
+  - Reference guides: workflow, brownfield, nomenclature, parallelization
+  
+- Updated CLI and slash commands for new tools:
+  - Backward compatibility via tool migration mapping
+  - Updated all command templates to reference new tools
+
+- Introduced standardized nomenclature:
+  - Features: `F001-name.md`, `F002-name.md`
+  - Decisions: `D001-name.md`, `D002-name.md`
+  - Migration support via `cm_init(action="migrate")`
+
+**Why:**
+- 43 tools created cognitive overload for AI agents
+- Redundancy between similar tools (e.g., `cm_add_feature` vs `intent_add_feature`)
+- "The intelligence is in the Skill, not the MCP" - MCP should be CRUD + optimized reading
+- Context Mesh is a documentation framework, not a complex orchestration system
+- Standardized nomenclature enables cross-references (F001 → D001)
+
+**Technical Details:**
+- Tools now use action/type pattern: `cm_intent(action="create", type="feature")`
+- Old tool names work via deprecation mapping in CLI
+- Skill provides workflow guidance, brownfield is a workflow not tools
+- Parallelization support via sub-agents documented in skill
+
+**Related:**
+- [Decision: D013 MCP Simplification](../decisions/D013-mcp-simplification.md)
+- [Decision: D002 MCP Tool Contracts](../decisions/002-mcp-tool-contracts.md)
+- [Feature: Hub Core](../intent/feature-hub-core.md)
+
+---
+
 ## 2026-03-03 - UI Removal (CLI and MCP Focus)
 
 **What Changed:**
