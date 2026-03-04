@@ -46,29 +46,37 @@ Context Mesh Hub is **3 apps in 1**: a single product that gives you a **CLI**, 
 
 Use [uv](https://docs.astral.sh/uv/) to install the CLI. The MCP server is included; the UI runs via `cm ui` when needed.
 
-#### Option A: Persistent install (recommended)
+#### Quick Install (recommended)
+
+```bash
+# Install + run setup in one command
+uv tool install context-mesh-hub-cli --from git+https://github.com/jeftarmascarenhas/context-mesh-hub.git#subdirectory=hub-cli && cm
+```
+
+> If `cm` is not found, add `~/.local/bin` to your PATH: `export PATH="$HOME/.local/bin:$PATH"`
+
+The interactive menu will guide you through:
+- 🔌 Get MCP config for your editor (Cursor, Copilot, Claude, Gemini)
+- ⚡ Install slash commands (`/add-feature`, `/fix-bug`, etc.)
+- 🎯 Install Context Mesh Skill for Cursor/Copilot
+- 🔍 Run diagnostics
+- 📋 List AI agents
+
+#### Advanced Options
+
+**Install only (run `cm` later):**
 
 ```bash
 uv tool install context-mesh-hub-cli --from git+https://github.com/jeftarmascarenhas/context-mesh-hub.git#subdirectory=hub-cli
 ```
 
-> If `cm` is not found, add `~/.local/bin` to your PATH: `export PATH="$HOME/.local/bin:$PATH"`
-
-Then run:
-
-```bash
-cm init
-```
-
-You’ll get an **interactive menu**: register project, get MCP config, install slash commands, start UI, run diagnostics, or list agents. (Running **`cm`** with no arguments does the same.)
-
-#### Option B: One-time run (no install)
+**One-time run (no install):**
 
 ```bash
 uvx --from git+https://github.com/jeftarmascarenhas/context-mesh-hub.git#subdirectory=hub-cli cm --help
 ```
 
-#### Option C: From source (development)
+**From source (development):**
 
 ```bash
 git clone https://github.com/jeftarmascarenhas/context-mesh-hub.git
@@ -77,13 +85,13 @@ cd context-mesh-hub
 source .venv/bin/activate   # if using venv
 ```
 
-**Upgrade (Option A):**
+**Upgrade:**
 
 ```bash
-uv tool install context-mesh-hub-cli --force --from git+https://github.com/jeftarmascarenhas/context-mesh-hub.git#subdirectory=hub-cli
+uv tool upgrade context-mesh-hub-cli
 ```
 
-**Uninstall (Option A):**
+**Uninstall:**
 
 ```bash
 uv tool uninstall context-mesh-hub-cli
@@ -99,9 +107,9 @@ cm init
 
 Then choose with the arrow keys:
 
-- **Register project** – register current (or another) directory as a Context Mesh project
 - **Get MCP config** – get editor-specific JSON for Cursor, Copilot, Claude, or Gemini
 - **Install slash commands** – install `/cm-add-feature`, `/cm-build`, etc. into your agent's command folder
+- **Install Context Mesh Skill** – install AI agent skill for better context understanding
 - **Run diagnostics**, **List AI agents**, or **Exit**
 
 ### 3. Configure MCP in your editor
