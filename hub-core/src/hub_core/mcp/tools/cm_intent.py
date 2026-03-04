@@ -77,14 +77,127 @@ def register_cm_intent(
             
             # List all features
             cm_intent(action="list", type="feature")
+            
+            # Get artifact specification
+            cm_intent(action="spec", type="feature")
         """
-        valid_actions = ["create", "update", "get", "list", "delete"]
-        valid_types = ["feature", "decision", "bug", "project"]
+        valid_actions = ["create", "update", "get", "list", "delete", "spec"]
+        valid_types = ["feature", "decision", "bug", "project", "pattern", "anti-pattern"]
         
         if action not in valid_actions:
             return {"error": f"Invalid action: {action}", "valid_actions": valid_actions}
         if type not in valid_types:
             return {"error": f"Invalid type: {type}", "valid_types": valid_types}
+        
+        # ====================================================================
+        # ACTION: SPEC - Get artifact specification
+        # ====================================================================
+        if action == "spec":
+            specs = {
+                "feature": {
+                    "naming_convention": {
+                        "format": "F00X-description.md",
+                        "rules": [
+                            "Must start with F followed by 3-4 digits",
+                            "Use lowercase with hyphens for description",
+                            "Sequential numbering (don't skip numbers)"
+                        ],
+                        "examples": ["F001-user-authentication.md", "F002-api-gateway.md"]
+                    },
+                    "required_sections": ["What", "Why", "Acceptance Criteria", "Status"],
+                    "recommended_sections": ["How", "Related"],
+                    "optional_sections": ["Constraints"],
+                    "structure": "# Feature: [Title]\n\n## What\n\n[Description]\n\n## Why\n\n[Justification]\n\n## How\n\n[Implementation approach]\n\n## Acceptance Criteria\n\n- [ ] Criterion 1\n\n## Constraints\n\n[Constraints]\n\n## Related\n\n- **Decision**: [DXX - Name](../decisions/DXX-*.md)\n\n## Status\n\n- **Created**: YYYY-MM-DD\n- **Status**: Active",
+                    "validation_rules": [
+                        "All required sections must be present",
+                        "Acceptance Criteria must use checkboxes",
+                        "Status must include Created date and current status",
+                        "Related links must use relative paths"
+                    ]
+                },
+                "decision": {
+                    "naming_convention": {
+                        "format": "D00X-description.md",
+                        "rules": [
+                            "Must start with D followed by 3-4 digits",
+                            "Use lowercase with hyphens for description",
+                            "Sequential numbering (don't skip numbers)"
+                        ],
+                        "examples": ["D001-tech-stack.md", "D002-auth-approach.md"]
+                    },
+                    "required_sections": ["Context", "Decision", "Rationale", "Status"],
+                    "recommended_sections": ["Alternatives Considered", "Consequences", "Related"],
+                    "optional_sections": ["Outcomes"],
+                    "structure": "# Decision: [Title]\n\n## Context\n\n[Problem statement]\n\n## Decision\n\n[Decision made]\n\n## Rationale\n\n[Why this decision]\n\n## Alternatives Considered\n\n[Other options]\n\n## Consequences\n\n### Positive\n- Benefit 1\n\n### Trade-offs\n- Trade-off 1\n\n## Outcomes\n\n[Added after implementation]\n\n## Related\n\n- [Feature: FXX](../intent/FXX-*.md)\n\n## Status\n\n- **Created**: YYYY-MM-DD\n- **Status**: Proposed | Accepted | Superseded",
+                    "validation_rules": [
+                        "All required sections must be present",
+                        "Status must include Created date and current status",
+                        "Consequences should have Positive and Trade-offs subsections",
+                        "Related links must use relative paths"
+                    ]
+                },
+                "pattern": {
+                    "naming_convention": {
+                        "format": "descriptive-name.md",
+                        "rules": [
+                            "Use lowercase with hyphens",
+                            "Descriptive, not numbered",
+                            "Should be reusable across projects"
+                        ],
+                        "examples": ["phased-refactoring-with-di.md", "event-sourcing-pattern.md"]
+                    },
+                    "required_sections": ["Context", "The Pattern", "Evidence", "Status"],
+                    "recommended_sections": ["Why It Works", "When to Use", "When NOT to Use", "Implementation Guide"],
+                    "optional_sections": ["Anti-Patterns to Avoid", "Related"],
+                    "validation_rules": [
+                        "Evidence section must have real-world examples",
+                        "Status must include Confidence and Impact levels"
+                    ]
+                },
+                "anti-pattern": {
+                    "naming_convention": {
+                        "format": "descriptive-problem-name.md",
+                        "rules": [
+                            "Use lowercase with hyphens",
+                            "Descriptive, not numbered",
+                            "Should clearly identify the problem"
+                        ],
+                        "examples": ["python-relative-imports-pitfall.md", "god-object-antipattern.md"]
+                    },
+                    "required_sections": ["Context", "The Problem", "Evidence", "Recommendation", "Status"],
+                    "recommended_sections": ["Why It Happens", "Related"],
+                    "optional_sections": [],
+                    "validation_rules": [
+                        "Evidence section must have real examples",
+                        "Recommendation must show correct approach"
+                    ]
+                },
+                "project": {
+                    "naming_convention": {
+                        "format": "project-intent.md",
+                        "rules": ["Fixed name: project-intent.md"],
+                        "examples": ["project-intent.md"]
+                    },
+                    "required_sections": ["What", "Why", "Scope", "Acceptance Criteria", "Status"],
+                    "recommended_sections": ["Constraints", "Related"],
+                    "optional_sections": [],
+                    "validation_rules": [
+                        "Must exist in context/intent/project-intent.md",
+                        "Scope must have Core Capabilities and Out of Scope subsections"
+                    ]
+                }
+            }
+            
+            if type in specs:
+                return {
+                    "action": "spec",
+                    "type": type,
+                    "specification": specs[type],
+                    "full_spec_location": "context/knowledge/ARTIFACT_SPECS.md",
+                    "tip": "Always consult ARTIFACT_SPECS.md before creating artifacts"
+                }
+            else:
+                return {"error": f"No specification available for type: {type}"}
         
         # ====================================================================
         # ACTION: GET

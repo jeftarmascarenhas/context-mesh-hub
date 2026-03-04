@@ -5,6 +5,24 @@
 
 ---
 
+## 📖 Artifact Specifications
+
+**CRITICAL**: Before creating or updating any Context Mesh artifact, load the specifications:
+
+📋 **Load**: `@context/knowledge/ARTIFACT_SPECS.md`
+
+This file defines:
+- ✅ Required sections for each artifact type (Feature, Decision, Pattern, etc.)
+- ⚠️ Recommended sections
+- ❌ Optional sections
+- 📝 Naming conventions (`F00X-*.md`, `D00X-*.md`)
+- 🔗 Cross-reference rules
+- ✅ Validation rules
+
+**Never create artifacts from scratch without consulting ARTIFACT_SPECS.md first.**
+
+---
+
 ## 🧠 Context Mesh Framework
 
 This project uses [Context Mesh](https://github.com/jeftarmascarenhas/context-mesh) for AI-First development.
