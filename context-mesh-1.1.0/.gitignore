@@ -1,7 +1,0 @@
-#macos
-.DS_Store
-
-# Internal guides (not for public documentation)
-RELEASE_GUIDE.md
-context-mesh-site
-test-prompts

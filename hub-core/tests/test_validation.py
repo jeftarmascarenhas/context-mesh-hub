@@ -119,7 +119,19 @@ JWT-based authentication system.
     
     def test_invalid_status_value(self, validator):
         """Test feature with invalid status value."""
-        content = """# Feature: User Authentication
+        content = """---
+id: F001
+type: feature
+title: User Authentication
+status: InProgress
+created: 2026-03-04
+updated: 2026-03-04
+depends_on: []
+decisions: []
+agents: []
+---
+
+# Feature: User Authentication
 
 ## What
 
@@ -132,15 +144,10 @@ Security requirement.
 ## Acceptance Criteria
 
 - [ ] Criterion 1
-
-## Status
-
-- **Created**: 2026-03-04
-- **Status**: InProgress
 """
         result = validator.validate(content, "F001-user-auth.md")
         assert not result.valid
-        assert any("Invalid status value" in e.message for e in result.errors)
+        assert any("Invalid status" in e.message for e in result.errors)
     
     def test_empty_acceptance_criteria(self, validator):
         """Test feature with empty acceptance criteria."""
