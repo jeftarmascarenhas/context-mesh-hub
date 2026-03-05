@@ -96,8 +96,8 @@ def create_server(repo_root: Optional[Path] = None) -> FastMCP:
     build_plan_extractor = BuildPlanExtractor(parser)
     
     # Persistence layer (file-based)
+    # Note: Directory is created lazily by FileStore when first write happens
     persistence_dir = effective_repo_root / ".context-mesh"
-    persistence_dir.mkdir(exist_ok=True)
     
     file_store = FileStore(persistence_dir)
     plan_repository = PlanRepository(file_store)

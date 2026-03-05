@@ -16,6 +16,9 @@ class FileStore:
     
     Stores data in .context-mesh/ directory with JSON format for
     git-friendliness and easy inspection.
+    
+    Directory is created lazily on first write to avoid creating
+    empty directories when MCP server starts.
     """
     
     def __init__(self, base_path: Path):
@@ -25,7 +28,7 @@ class FileStore:
             base_path: Base directory for storage (e.g., repo_root / ".context-mesh").
         """
         self.base_path = Path(base_path)
-        self.base_path.mkdir(parents=True, exist_ok=True)
+        # Note: Directory is created lazily in save() method
     
     def save(self, key: str, data: Dict[str, Any]) -> None:
         """Save data to file.
@@ -40,6 +43,7 @@ class FileStore:
         file_path = self.base_path / f"{key}.json"
         
         try:
+            # Create directory lazily on first write
             file_path.parent.mkdir(parents=True, exist_ok=True)
             with open(file_path, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
