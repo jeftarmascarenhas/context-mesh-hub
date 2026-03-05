@@ -353,7 +353,7 @@ print(json.dumps({{"success": True, "content": result}}))
         """Get information about how hub-core was detected.
         
         Returns:
-            dict with: found, path, method, uv_available
+            dict with: found, path, method, uv_available, will_use_git
         """
         import shutil
         import platform
@@ -379,13 +379,16 @@ print(json.dumps({{"success": True, "content": result}}))
                 "path": str(hub_core_dir),
                 "method": method,
                 "uv_available": uv_path is not None,
+                "will_use_git": False,
             }
         else:
+            # hub-core not found locally, will use git URL if uv available
             return {
                 "found": False,
                 "path": None,
-                "method": "not found",
+                "method": "git URL (auto-download)" if uv_path else "not found",
                 "uv_available": uv_path is not None,
+                "will_use_git": uv_path is not None,
             }
     
     def get_mcp_config(self, use_uv: bool = True) -> dict:
@@ -408,7 +411,7 @@ print(json.dumps({{"success": True, "content": result}}))
         uv_path = shutil.which("uv")
         
         if use_uv and uv_path and hub_core_dir:
-            # Use uv run - auto-manages venv and dependencies
+            # Use uv run with local directory - auto-manages venv and dependencies
             return {
                 "mcpServers": {
                     "context-mesh-hub": {
@@ -416,6 +419,21 @@ print(json.dumps({{"success": True, "content": result}}))
                         "args": [
                             "run",
                             "--directory", str(hub_core_dir),
+                            "python", "-m", "hub_core.server"
+                        ]
+                    }
+                }
+            }
+        
+        # If uv available but no local hub-core, use uv run --with to install from git
+        if use_uv and uv_path and not hub_core_dir:
+            return {
+                "mcpServers": {
+                    "context-mesh-hub": {
+                        "command": uv_path,
+                        "args": [
+                            "run",
+                            "--with", "git+https://github.com/jeftarmascarenhas/context-mesh-hub.git#subdirectory=hub-core",
                             "python", "-m", "hub_core.server"
                         ]
                     }

@@ -42,6 +42,7 @@ from .mcp.tools.cm_build import register_cm_build
 from .mcp.tools.cm_learn import register_cm_learn
 from .mcp.tools.cm_validate import register_cm_validate
 from .mcp.tools.cm_status import register_cm_status
+from .mcp.tools.cm_help import register_cm_help
 
 # Additional components (prompt packs, etc.)
 from .prompt_resolver import PromptResolver
@@ -193,6 +194,8 @@ def create_server(repo_root: Optional[Path] = None) -> FastMCP:
         plan_repository=plan_repository,
         proposal_repository=proposal_repository,
     )
+    
+    register_cm_help(mcp=mcp)
     
     return mcp
 

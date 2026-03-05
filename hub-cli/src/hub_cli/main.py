@@ -236,9 +236,12 @@ def _do_config(editor: str, raw: bool = False) -> None:
         if info["found"]:
             console.print(f"[green]✓[/green] Detected hub-core: [cyan]{info['path']}[/cyan]")
             console.print(f"  [dim]Method: {info['method']}[/dim]")
+        elif info.get("will_use_git"):
+            console.print(f"[green]✓[/green] Will use hub-core from GitHub (auto-download via uv)")
+            console.print(f"  [dim]Method: {info['method']}[/dim]")
         else:
             console.print(f"[yellow]⚠[/yellow] Could not auto-detect hub-core path")
-            console.print(f"  [dim]Set CONTEXT_MESH_HUB_CORE_PATH environment variable to fix[/dim]")
+            console.print(f"  [dim]Install uv or set CONTEXT_MESH_HUB_CORE_PATH environment variable[/dim]")
         console.print()
     
     mcp_config = client.get_mcp_config_for_editor(editor)
